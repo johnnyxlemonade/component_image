@@ -1,0 +1,22 @@
+{
+ "name": "lemonade/component_image",
+ "license": "MIT",
+ "authors": [
+   {
+    "name": "Honza Mudrak",
+    "email": "honza@core1.agency",
+    "homepage": "https://core1.agency"
+   }
+ ],        
+ "autoload": { 
+   "psr-4": {
+     "Lemonade\\Image\\": "src/"
+   }
+ }, 
+ "require": {
+   "php": ">=7.2 <8.3",
+   "nette/utils": "^3.2"
+ }
+}
+
+
