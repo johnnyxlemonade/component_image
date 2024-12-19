@@ -65,21 +65,21 @@ final class ImageProvider {
                 $image->saveAlpha(true);
 
                 $image->place($thumb, "50%", "50%");
-                $image->sharpen();
+                // $image->sharpen();
 
             break;
             case 2: // pevne oriznuti (vyplni cilove platno a vsechno ostatni orizene)
 
                 $image = AppGenerator::fromFile($app->getFileFs());
                 $image->resize(($width ?? $height ?? $image->getWidth()), ($height ?? $width ?? $image->getHeight()), AppGenerator::EXACT, true);
-                $image->sharpen();
+                // $image->sharpen();
 
             break;
             case 3: // fit (muze mit jine nez pozadovane rozmery, aspect ratio)
 
                 $image = AppGenerator::fromFile($app->getFileFs());
                 $image->resize($width, $height, AppGenerator::FIT|AppGenerator::SHRINK_ONLY);
-                $image->sharpen();
+                // $image->sharpen();
 
             break;
             case 0: // nepouziva orez
@@ -87,7 +87,7 @@ final class ImageProvider {
 
                 $image = AppGenerator::fromFile($app->getFileFs());
                 $image->resize(($width ?? $height ?? $image->getWidth()), ($height ?? $width ?? $image->getHeight()), AppGenerator::EXACT, true);
-                $image->sharpen();
+                // $image->sharpen();
 
             break;
         }
