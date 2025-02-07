@@ -38,7 +38,6 @@ final class AppImage
 
             $img = new AppImage($level, $storageTypId, $moduleId, $artId, $baseName, $args);
 
-
             if($img->tryBrowserCache()) {
 
                 exit(0);

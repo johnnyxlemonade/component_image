@@ -138,20 +138,27 @@ final class ImageProvider {
             // nacteni error obrazku
             $thumb = AppGenerator::fromString(base64_decode(static::imageErrorString()));
             $thumb->resize(($width ? ((int) round($width * 0.75)) : null), ($height ? ((int) round($height * 0.75)) : null), AppGenerator::FIT|AppGenerator::SHRINK_ONLY, true);
-            
+
             // ulozeni + vystup
             $image = AppGenerator::fromBlank($width, $height, ColorProvider::hexRgb($app->getData()->getCanvasColor())->toArray());
-            $image->sharpen();
-            $image->place($thumb, "50%", "50%", 70);
-            
-            // podklad - mame mit pruhledne PNG
-            $trans = $image->colorAllocateAlpha(0, 0, 0, 127);
+            //$image->sharpen();
+
+            // Přepnutí na true color (musí být před alokací průhledné barvy)
+            $image->paletteToTrueColor();
+
+            // Nastavení průhlednosti
+            $trans = $image->colorAllocateAlpha(0, 0, 0, 127); // Plně průhledná barva
             $image->fill(0, 0, $trans);
-            $image->paletteToTrueColor(); 
-            
+
+            // Aktivace průhlednosti pro PNG
+            $image->saveAlpha(true);
+
+            // Umístění miniatury doprostřed
+            $image->place($thumb, "50%", "50%", 70);
+
             // adresar
             $app->createDirectory($app->getMissingPng());
-            
+
             // ulozit
             $image->save($app->getMissingPng(), $app->getData()->getQuality(), $imgExt);
 
