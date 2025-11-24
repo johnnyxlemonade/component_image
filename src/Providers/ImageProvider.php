@@ -51,6 +51,11 @@ final class ImageProvider {
         $width  = self::_getWidth($app->getData());
         $height = self::_getHeight($app->getData());
 
+        // 0 h, 0 w 
+        if($width === 0 && $height === 0) {
+            $width = self::$_allowedSize["minw"];
+            $height = self::$_allowedSize["minh"];
+        }
 
         switch ($app->getData()->getCrop()) {
 
