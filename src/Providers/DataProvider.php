@@ -2,192 +2,101 @@
 
 namespace Lemonade\Image\Providers;
 
+use Lemonade\Image\ImageOptionsParser;
+use Lemonade\Image\ImageOptionsDTO;
+
+/**
+ * DataProvider
+ *
+ * Lehká přístupová vrstva nad parametry obrázku předanými v URL.
+ * Interně využívá `ImageOptionsParser` pro dekódování argumentů
+ * a uchovává immutable `ImageOptionsDTO`, který slouží jako jediný
+ * zdroj pravdy pro generování obrázků.
+ *
+ * Klíčové vlastnosti:
+ * - Zajišťuje bezpečný přístup ke všem normalizovaným hodnotám
+ * - Poskytuje setter metody, které nevytvářejí mutaci, ale novou
+ *   instanci DTO (immutable princip)
+ * - Slouží jako datová vrstva pro `FileProvider` a `ImageProvider`
+ * - Garantuje konzistenci všech hodnot již po parsování
+ *
+ * `DataProvider` neprovádí žádné výpočty ani transformace obrázků —
+ * jeho úloha je pouze předat správně normalizovaná data generátoru.
+ *
+ * @package     Lemonade Framework
+ * @subpackage  Image
+ * @category    Provider
+ * @author      Honza Mudrák
+ * @license     MIT
+ * @since       1.0.0
+ * @see         ImageOptionsParser
+ * @see         ImageOptionsDTO
+ * @see         FileProvider
+ */
 final class DataProvider
 {
+    private ImageOptionsParser $parser;
+    private ImageOptionsDTO $dto;
 
-    /**
-     * Soubor parametry
-     * @var array
-     */
-    private $fileOpts = [];
-
-    /**
-     * Barva
-     * @var string
-     */
-    private $fileColor = "ffffff";
-
-    /**
-     * @param string|null $args
-     */
-    public function __construct(string $args = null)
+    public function __construct(?string $args = null)
     {
-
-        $this->_processData(args: $args);
+        $this->parser = new ImageOptionsParser(args: $args);
+        $this->dto = $this->parser->toDTO();
     }
 
-
-    /**
-     * Hash
-     * @return string
-     */
-    public function getHash(): string
-    {
-
-        return md5(json_encode($this->fileOpts));
-    }
-
-    /**
-     * Sirka
-     * @return int|null
-     */
     public function getWidth(): ?int
     {
-
-        return ($this->fileOpts["app_width"] ?? null);
+        return $this->dto->getWidth();
     }
 
-    /**
-     * @param int $width
-     * @return void
-     */
     public function setWidth(int $width): void
     {
-
-        $this->fileOpts["app_width"] = $width;
+        $this->dto = $this->dto->withWidth($width);
     }
 
-    /**
-     * Vyska
-     * @return int|null
-     */
     public function getHeight(): ?int
     {
-
-        return ($this->fileOpts["app_height"] ?? null);
+        return $this->dto->getHeight();
     }
 
-    /**
-     * @param int $height
-     * @return void
-     */
     public function setHeight(int $height): void
     {
-        $this->fileOpts["app_height"] = $height;
+        $this->dto = $this->dto->withHeight($height);
     }
 
-    /**
-     * Typ orezu
-     * @return int|null
-     */
-    public function getCrop(): ?int
+    public function getCrop(): int
     {
-
-        return ($this->fileOpts["app_crop"] ?? 0);
+        return $this->dto->getCrop();
     }
 
-    /**
-     * Canvas
-     * @return string
-     */
     public function getCanvasColor(): string
     {
-
-        return ($this->fileOpts["app_canvas"] ?? "ffffff");
+        return $this->dto->getCanvasColor();
     }
 
-    /**
-     * Kvalita
-     * @return int
-     */
     public function getQuality(): int
     {
-
-        return ($this->fileOpts["app_quality"] ?? 72);
+        return $this->dto->getQuality();
     }
 
-    /**
-     * Chybny obrazek
-     * @return bool
-     */
     public function getMissing(): bool
     {
-
-        return ($this->fileOpts["app_missing"] ?? true);
+        return $this->dto->isMissing();
     }
 
-    /**
-     * Nebyla uvedena vyska a sirka
-     * @return bool
-     */
     public function isMissingAllSize(): bool
     {
-
-        if (!isset($this->fileOpts["app_width"]) && !isset($this->fileOpts["app_height"])) {
-
-            return true;
-
-        }
-
-        return false;
+        return $this->dto->isMissingAllSize();
     }
 
-    /**
-     * Nastavi filtry
-     * @param string|null $args
-     * @return void
-     */
-    protected function _processData(string $args = null): void
+    public function getHash(): string
     {
-
-        if (!empty($data = explode("-", $args))) {
-            foreach ($data as $item) {
-
-                $key = mb_substr($item, 0, 1);
-                $val = mb_substr($item, 1);
-
-                // canvas
-                if ($key == "c" && mb_strlen($val) === 6 && ctype_xdigit(strval($val))) {
-
-                    $this->fileOpts["app_canvas"] = (string)$val;
-                }
-
-                // numbers
-                if (in_array($key, ["w", "h", "q", "e", "z"]) && ctype_digit(strval($val))) {
-
-                    // sirka
-                    if ($key === "w") {
-
-                        $this->fileOpts["app_width"] = (int) $val;
-                    }
-
-                    // vyska
-                    if ($key === "h") {
-
-                        $this->fileOpts["app_height"] = (int) $val;
-                    }
-
-                    // kvalita
-                    if ($key === "q") {
-
-                        $this->fileOpts["app_quality"] = (int) $val;
-                    }
-
-                    // chybovy obrazek
-                    if ($key === "e" && in_array((int) $val, [0, 1], true)) {
-
-                        $this->fileOpts["app_missing"] = $val === "1";
-                    }
-
-                    // typOriznuti
-                    if ($key === "z" && in_array((int) $val, [0, 1, 2, 3], true)) {
-
-                        $this->fileOpts["app_crop"] = (int) $val;
-                    }
-
-                }
-            }
-        }
-
+        return $this->dto->getHash();
     }
+
+    public function getDTO(): ImageOptionsDTO
+    {
+        return $this->dto;
+    }
+
 }

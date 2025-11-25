@@ -1,33 +1,36 @@
 <?php declare(strict_types=1);
 
-
 namespace Lemonade\Image\Providers;
 
-use Lemonade\Image\Traits\StaticTrait;
-
-final class WebpProvider {
-    
-    use StaticTrait;
-
+/**
+ * WebpProvider
+ *
+ * Detekuje podporu WebP na straně klienta podle hlaviček prohlížeče.
+ *
+ * @package     Lemonade Framework
+ * @subpackage  Image\Providers
+ * @category    Image
+ * @license     MIT
+ * @since       1.0.0
+ * @see         ImageProvider
+ */
+final class WebpProvider
+{
     /**
-     * Webp
-     * @var bool
-     */
-    private $webp = false;
-    
-
-    /**
-     * @return bool
+     * Zjistí podporu WebP na straně klienta.
+     *
+     * Podmínky (zachováno 1:1 s originálem):
+     * - HTTP_ACCEPT obsahuje "image/webp"
+     * - nebo User-Agent obsahuje " Chrome/"
      */
     public static function hasSupport(): bool
     {
-    
-        if (isset($_SERVER["HTTP_ACCEPT"]) && strpos($_SERVER["HTTP_ACCEPT"], "image/webp") !== false || isset($_SERVER["HTTP_USER_AGENT"]) && strpos($_SERVER["HTTP_USER_AGENT"], " Chrome/") !== false) {
-            
-            return true;
-        }
-        
-        return false;
+        $accept = ServerProvider::get('HTTP_ACCEPT');
+        $agent  = ServerProvider::get('HTTP_USER_AGENT');
+
+        return (
+            strpos($accept, 'image/webp') !== false
+            || strpos($agent, ' Chrome/') !== false
+        );
     }
-    
 }

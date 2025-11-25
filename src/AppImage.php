@@ -1,137 +1,144 @@
 <?php declare(strict_types=1);
 
-
 namespace Lemonade\Image;
 
-use Lemonade\Image\Traits\ObjectTrait;
 use Lemonade\Image\Providers\DirectoryProvider;
 use Lemonade\Image\Providers\FileProvider;
 use Lemonade\Image\Providers\DataProvider;
 use Lemonade\Image\Providers\ImageProvider;
-use Exception;
+use Throwable;
 
+/**
+ * AppImage
+ *
+ * Hlavní vstupní třída pro generování obrázků v Lemonade Frameworku.
+ * Řeší kompletní pipeline zpracování:
+ *
+ * - načtení požadavku (rozměry, crop, kvalita, canvas) přes `DataProvider`
+ * - sestavení kontextu (adresář, cesta k souboru, argumenty, cache)
+ * - řízení toku: 304 Not Modified → cache → originál → fallback error image
+ * - bezpečné generování výstupu přes `ImageProvider`
+ *
+ * Funkce třídy:
+ * - jednotný entry-point pro všechny obrázkové endpointy (factoryApp)
+ * - konzistentní práce s provider vrstvou (DirectoryProvider, FileProvider, DataProvider)
+ * - fallback logika pro chybějící soubory a definované rozměry
+ * - automatická invalidace cache pokud originál neexistuje
+ *
+ * Třída sama negeneruje obrázky – pouze řídí tok, správně vybere, kdy:
+ * - vrátit `304 Not Modified`
+ * - obsloužit již existující cache
+ * - vytvořit nový render
+ * - vygenerovat error placeholder
+ *
+ * @package     Lemonade Framework
+ * @subpackage  Image
+ * @category    Core
+ * @author      Honza Mudrák
+ * @license     MIT
+ * @since       1.0.0
+ * @see         ImageProvider
+ * @see         FileProvider
+ * @see         DataProvider
+ * @see         DirectoryProvider
+ */
 final class AppImage
 {
-
-    use ObjectTrait;
+    /**
+     * File + directory + data context pro aktuální požadavek
+     */
+    private FileProvider $provider;
 
     /**
-     * @var FileProvider|null
+     * Entry-point volaný z frameworku
      */
-    private ?FileProvider $app = null;
-
-    /**
-     * factoryApp
-     * @param int $level
-     * @param string|null $storageTypId
-     * @param string|null $moduleId
-     * @param string|null $artId
-     * @param string|null $baseName
-     * @param string|null $args
-     * @return void
-     */
-    public static function factoryApp(int $level, string $storageTypId = null, string $moduleId = null, string $artId = null, string $baseName = null, string $args = null): void
+    public static function factoryApp(
+        int     $level,
+        ?string $storageTypId,
+        ?string $moduleId,
+        ?string $artId,
+        ?string $baseName,
+        ?string $args
+    ): void
     {
+        $app = new self(
+            level: $level,
+            storageTypId: $storageTypId,
+            moduleId: $moduleId,
+            artId: $artId,
+            baseName: $baseName,
+            args: $args
+        );
 
+        $app->run();
+    }
 
+    /**
+     * Vytvoří kontext providerů (adresář, data, soubor)
+     */
+    protected function __construct(
+        int     $level,
+        ?string $storageTypId,
+        ?string $moduleId,
+        ?string $artId,
+        ?string $baseName,
+        ?string $args
+    )
+    {
+        $this->provider = new FileProvider(
+            dir: new DirectoryProvider(
+                level: $level,
+                storageTypId: $storageTypId,
+                moduleId: $moduleId,
+                artId: $artId
+            ),
+            data: new DataProvider($args),
+            file: $baseName
+        );
+
+    }
+
+    /**
+     * Hlavní workflow:
+     * - hotový obrázek z browser cíle (If-Modified)
+     * - hotový obrázek z cache
+     * - generování z originálu
+     * - fallback error image
+     */
+    public function run(): void
+    {
         try {
-
-            $img = new AppImage($level, $storageTypId, $moduleId, $artId, $baseName, $args);
-
-            if($img->tryBrowserCache()) {
-
-                exit(0);
+            // 1) klient již má obrazek (304)
+            if ($this->provider->sendBrowserImage()) {
+                return;
             }
 
-            if($img->tryServerCache()) {
-
-                exit(0);
+            // 2) existuje cache verze
+            if ($this->provider->sendCacheImage()) {
+                return;
             }
 
-            $img->tryAppRun();
+            // 3) existuje originál → vytvořit variantu
+            if ($this->provider->isFileExists($this->provider->getFileFs())) {
+                ImageProvider::imageCreate($this->provider);
+                return;
+            }
 
-        } catch (Exception $e) {
+            // 4) neexistuje → error image
+            $this->provider->deleteCache();
+            ImageProvider::imageError($this->provider);
 
-            _vd($e->getMessage());
+        } catch (Throwable $e) {
+
+            $data = $this->provider->getData();
+
+            // fallback minimálních rozměrů
+            if ($data->isMissingAllSize()) {
+                $data->setWidth(600);
+                $data->setHeight(600);
+            }
+
+            ImageProvider::imageError($this->provider);
         }
-
-
-        exit(0);
     }
-
-    /**
-     * @param int $level
-     * @param string|null $storageTypId
-     * @param string|null $moduleId
-     * @param string|null $artId
-     * @param string|null $baseName
-     * @param string|null $args
-     */
-    protected function __construct(int $level, string $storageTypId = null, string $moduleId = null, string $artId = null, string $baseName = null, string $args = null)
-    {
-
-        $this->app = new FileProvider(dir: new DirectoryProvider(level: $level, storageTypId: $storageTypId, moduleId: $moduleId, artId: $artId), data: new DataProvider(args: $args), file: $baseName);
-    }
-
-    /**
-     * cacheBrowser
-     * @return bool
-     */
-    protected function tryBrowserCache(): bool
-    {
-        
-        return $this->app->sendBrowserImage();
-    }
-
-    /**
-     * cacheServer
-     * @return bool
-     */
-    protected function tryServerCache(): bool
-    {
-        
-        return $this->app->sendCacheImage();
-    }
-
-    /**
-     * outputStandard
-     * @return void
-     */
-    protected function tryAppRun(): void
-    {
-
-        try {
-
-            if($this->app->isFileExists(file: $this->app->getFileFs())) {
-
-                // generator
-                ImageProvider::imageCreate(app: $this->app);
-
-            } else {
-
-                // smazat soubory
-                $this->app->deleteCache();
-
-                // generator
-                ImageProvider::imageError(app: $this->app);
-            }
-
-        } catch (Exception $e) {
-
-            // chceme original?
-            if($this->app->getData()->isMissingAllSize()) {
-
-                $this->app->getData()->setWidth(width: 600);
-                $this->app->getData()->setHeight(height: 600);
-            }
-
-            // spatna extenze souboru
-            ImageProvider::imageError(app: $this->app);
-        }
-
-    }
-     
-
-    
 }
-    
