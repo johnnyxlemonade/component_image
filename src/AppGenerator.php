@@ -84,70 +84,70 @@ use Lemonade\Image\Utils\Callback;
  * @property-read resource|\GdImage $imageResource
  */
 final class AppGenerator {
-    
+
     use ObjectTrait;
     use MixedTrait;
-    
+
     /**
      * Only shrinks images
      * @var string
      */
     const SHRINK_ONLY = 0b0001;
-    
+
     /**
      * will ignore aspect ratio
      * @var unknown
      */
     const STRETCH = 0b0010;
-    
+
     /**
      * fits in given area so its dimensions are less than or equal to the required dimensions
      * @var int
      */
     const FIT = 0b0000;
-    
+
     /**
      * fills given area so its dimensions are greater than or equal to the required dimensions
      * @var string
      */
     const FILL = 0b0100;
-    
+
     /**
      * fills given area exactly
      * @var string
      */
     const EXACT = 0b1000;
-    
+
     /**
      * JPEG
      * @var int
      */
     const JPEG = IMAGETYPE_JPEG;
-    
+
     /**
      * PNG
      * @var int
      */
     const PNG = IMAGETYPE_PNG;
-    
+
     /**
      * Gif
      * @var int
      */
     const GIF = IMAGETYPE_GIF;
-    
+
     /**
      * WEBP (7.1)
      * @var int
      */
     const WEBP = 18;
-    
+
     /**
      * Prazdny GIF
      * @var string
      */
     const EMPTY_GIF = "GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;";
-    
+
     /**
      * Formaty
      * @var array
@@ -158,19 +158,19 @@ final class AppGenerator {
         self::GIF => "gif",
         self::WEBP => "webp"
     ];
-    
+
     /**
      *
-     * @var resource|\GdImage 
+     * @var resource|\GdImage
      */
     private $image;
-    
-    
+
+
     /**
      * Returns RGB color (0..255) and transparency (0..127).
      */
     public static function rgb(int $red, int $green, int $blue, int $transparency = 0): array {
-        
+
         return [
             'red' => max(0, min(255, $red)),
             'green' => max(0, min(255, $green)),
@@ -178,51 +178,51 @@ final class AppGenerator {
             'alpha' => max(0, min(127, $transparency)),
         ];
     }
-    
-    
+
+
     /**
      * Reads an image from a file and returns its type in $type.
      * @throws \LogicException if gd extension is not loaded
      * @throws \Exception if file not found or file type is not known
      */
     public static function fromFile(string $file, int $type = null) {
-        
+
         if (!extension_loaded('gd')) {
             throw new \LogicException('PHP extension GD is not loaded.');
         }
-        
+
         $type = self::detectTypeFromFile($file);
-        
+
         if (!$type) {
             throw new \Exception(is_file($file) ? "Unknown type of file '$file'." : "File '$file' not found.");
         }
-        
+
         return self::invokeSafe('imagecreatefrom' . self::FORMATS[$type], $file, "Unable to open file '$file'.", __METHOD__);
     }
-    
-    
+
+
     /**
      * Reads an image from a string and returns its type in $type.
      * @throws \LogicException if gd extension is not loaded
      * @throws \Exception
      */
     public static function fromString(string $s, int $type = null) {
-        
+
         if (!extension_loaded('gd')) {
-            
+
             throw new \LogicException('PHP extension GD is not loaded.');
         }
-        
+
         $type = self::detectTypeFromString($s);
-        
+
         if (!$type) {
             throw new \Exception('Unknown type of image.');
         }
-        
+
         return self::invokeSafe('imagecreatefromstring', $s, 'Unable to open image from string.', __METHOD__);
     }
-    
-    
+
+
     /**
      *
      * @param string $func
@@ -233,27 +233,27 @@ final class AppGenerator {
      * @return \Lemonade\Image\AppGenerator
      */
     private static function invokeSafe(string $func, string $arg, string $message, string $callee) {
-        
+
         $errors = [];
-        
+
         $res = Callback::invokeSafe($func, [$arg], function (string $message) use (&$errors) {
-            
+
             $errors[] = $message;
         });
-        
+
             if (!$res) {
-                
+
                 throw new \Exception($message . ' Errors: ' . implode(', ', $errors));
-                
+
             } elseif ($errors) {
-                
+
                 trigger_error($callee . '(): ' . implode(', ', $errors), E_USER_WARNING);
             }
-            
+
             return new static($res);
     }
-    
-    
+
+
     /**
      * Creates a new true color image of the given dimensions. The default color is black.
      *
@@ -265,56 +265,56 @@ final class AppGenerator {
      * @return \Lemonade\Image\AppGenerator
      */
     public static function fromBlank(int $width, int $height, array $color = null) {
-        
+
         if (!extension_loaded('gd')) {
-            
+
             throw new \LogicException('PHP extension GD is not loaded.');
         }
-        
+
         if ($width < 1 || $height < 1) {
-            
+
             throw new \InvalidArgumentException('Image width and height must be greater than zero.');
         }
-        
+
         $image = imagecreatetruecolor($width, $height);
-        
+
         if ($color) {
-            
+
             $color += ['alpha' => 0];
             $color = imagecolorresolvealpha($image, $color['red'], $color['green'], $color['blue'], $color['alpha']);
             imagealphablending($image, false);
             imagefilledrectangle($image, 0, 0, $width - 1, $height - 1, $color);
             imagealphablending($image, true);
         }
-        
+
         return new static($image);
     }
-    
-    
+
+
     /**
      * Returns the type of image from file.
      * @param string $file
      * @return int
      */
     public static function detectTypeFromFile(string $file) {
-        
+
         $type = @getimagesize($file)[2]; // @ - files smaller than 12 bytes causes read error
-        
+
         return isset(self::FORMATS[$type]) ? $type : null;
     }
-    
-    
+
+
     /**
      * Returns the type of image from string.
      * @return int
      */
     public static function detectTypeFromString(string $s) {
-        
+
         $type = @getimagesizefromstring($s)[2]; // @ - strings smaller than 12 bytes causes read error
         return isset(self::FORMATS[$type]) ? $type : null;
     }
-    
-    
+
+
     /**
      * Returns the file extension for the given Image constanst
      *
@@ -323,14 +323,14 @@ final class AppGenerator {
      * @return string
      */
     public static function typeToExtension(int $type): string {
-        
+
         if (!isset(self::FORMATS[$type])) {
             throw new \InvalidArgumentException("Unsupported image type '$type'.");
         }
-        
+
         return self::FORMATS[$type];
     }
-    
+
     /**
      * Returns the mime type for the given Image constant
      *
@@ -338,41 +338,41 @@ final class AppGenerator {
      * @return string
      */
     public static function typeToMimeType(int $type): string {
-        
+
         return "image/" . self::typeToExtension($type);
     }
-    
-    
+
+
     /**
      * Wraps GD image.
      * @param  resource|\GdImage  $image
      */
     public function __construct($image) {
-        
+
         $this->setImageResource($image);
-        
+
         imagesavealpha($image, true);
     }
-    
-    
+
+
     /**
      * Returns image width.
      */
     public function getWidth(): int {
-        
+
         return imagesx($this->image);
     }
-    
-    
+
+
     /**
      * Returns image height.
      */
     public function getHeight(): int {
-        
+
         return imagesy($this->image);
     }
-    
-    
+
+
     /**
      *
      * @param resource|\GdImage  $image
@@ -380,25 +380,25 @@ final class AppGenerator {
      * @return \Lemonade\Image\AppGenerator
      */
     protected function setImageResource($image) {
-        
+
         if (!$image instanceof \GdImage && !(is_resource($image) && get_resource_type($image) === 'gd')) {
              throw new \Exception("Image is not valid.");
 		}
-        
+
         $this->image = $image;
         return $this;
     }
-    
-    
+
+
     /**
      * Returns image GD resource.
      * @return resource|\GdImage
      */
     public function getImageResource() {
-        
+
         return $this->image;
     }
-    
+
     /**
      * Scales an image. Width and height accept pixels or percent.
      *
@@ -408,30 +408,30 @@ final class AppGenerator {
      * @param bool $shrinkOnly
      */
     public function resize($width = null,  $height = null, int $mode = self::FIT, bool $shrinkOnly = false) {
-        
+
         if ($mode === self::EXACT) {
-            
+
             return $this->resize($width, $height, self::FILL)->crop("50%", "50%", $width, $height);
         }
-        
+
         list($newWidth, $newHeight) = static::calculateSize($this->getWidth(), $this->getHeight(), $width, $height, $mode, $shrinkOnly);
-        
+
         if ($newWidth !== $this->getWidth() || $newHeight !== $this->getHeight()) { // resize
-            
+
             $newImage = static::fromBlank($newWidth, $newHeight, self::rgb(0, 0, 0, 127))->getImageResource();
             imagecopyresampled($newImage, $this->image, 0, 0, 0, 0, $newWidth, $newHeight, $this->getWidth(), $this->getHeight());
-            
+
             $this->image = $newImage;
         }
-        
+
         if ($width < 0 || $height < 0) {
             imageflip($this->image, $width < 0 ? ($height < 0 ? IMG_FLIP_BOTH : IMG_FLIP_HORIZONTAL) : IMG_FLIP_VERTICAL);
         }
-        
+
         return $this;
     }
-    
-    
+
+
     /**
      * Calculates dimensions of resized image. Width and height accept pixels or percent.
      *
@@ -443,7 +443,7 @@ final class AppGenerator {
      * @param bool $shrinkOnly
      */
     public static function calculateSize($srcWidth, $srcHeight, $newWidth, $newHeight, $mode = self::FIT, bool $shrinkOnly = false): array {
-        
+
         $shrinkOnly = $shrinkOnly || ($mode & self::SHRINK_ONLY); // back compatibility
         if ($newWidth === null) {
         } elseif (self::isPercent($newWidth)) {
@@ -452,7 +452,7 @@ final class AppGenerator {
         } else {
             $newWidth = abs($newWidth);
         }
-        
+
         if ($newHeight === null) {
         } elseif (self::isPercent($newHeight)) {
             $newHeight = (int) round($srcHeight / 100 * abs($newHeight));
@@ -460,12 +460,12 @@ final class AppGenerator {
         } else {
             $newHeight = abs($newHeight);
         }
-        
+
         if ($mode & self::STRETCH) { // non-proportional
             if (!$newWidth || !$newHeight) {
                 throw new \InvalidArgumentException('For stretching must be both width and height specified.');
             }
-            
+
             if ($shrinkOnly) {
                 $newWidth = (int) round($srcWidth * min(1, $newWidth / $srcWidth));
                 $newHeight = (int) round($srcHeight * min(1, $newHeight / $srcHeight));
@@ -474,33 +474,33 @@ final class AppGenerator {
             if (!$newWidth && !$newHeight) {
                 throw new \InvalidArgumentException('At least width or height must be specified.');
             }
-            
+
             $scale = [];
             if ($newWidth > 0) { // fit width
                 $scale[] = $newWidth / $srcWidth;
             }
-            
+
             if ($newHeight > 0) { // fit height
                 $scale[] = $newHeight / $srcHeight;
             }
-            
+
             if ($mode & self::FILL) {
                 $scale = [max($scale)];
             }
-            
+
             if ($shrinkOnly) {
                 $scale[] = 1;
             }
-            
+
             $scale = min($scale);
             $newWidth = (int) round($srcWidth * $scale);
             $newHeight = (int) round($srcHeight * $scale);
         }
-        
+
         return [max($newWidth, 1), max($newHeight, 1)];
     }
-    
-    
+
+
     /**
      * Crops image.
      *
@@ -511,26 +511,26 @@ final class AppGenerator {
      * @return static
      */
     public function crop( $left, $top, $width, $height) {
-        
+
         list($r['x'], $r['y'], $r['width'], $r['height']) = static::calculateCutout($this->getWidth(), $this->getHeight(), $left, $top, $width, $height);
-        
+
         if (gd_info()['GD Version'] === 'bundled (2.1.0 compatible)') {
-            
+
             $this->image = imagecrop($this->image, $r);
             imagesavealpha($this->image, true);
-            
+
         } else {
-            
+
             $newImage = static::fromBlank($r['width'], $r['height'], self::RGB(0, 0, 0, 127))->getImageResource();
             imagecopy($newImage, $this->image, 0, 0, $r['x'], $r['y'], $r['width'], $r['height']);
             $this->image = $newImage;
         }
-        
-        
+
+
         return $this;
     }
-    
-    
+
+
     /**
      * Calculates dimensions of cutout in image. Arguments accepts pixels or percent.
      *
@@ -542,44 +542,44 @@ final class AppGenerator {
      * @param int|string $newHeight
      */
     public static function calculateCutout(int $srcWidth, int $srcHeight, $left, $top, $newWidth, $newHeight): array {
-        
+
         if (self::isPercent($newWidth)) {
             $newWidth = (int) round($srcWidth / 100 * $newWidth);
         }
-        
+
         if (self::isPercent($newHeight)) {
             $newHeight = (int) round($srcHeight / 100 * $newHeight);
         }
-        
+
         if (self::isPercent($left)) {
             $left = (int) round(($srcWidth - $newWidth) / 100 * $left);
         }
-        
+
         if (self::isPercent($top)) {
             $top = (int) round(($srcHeight - $newHeight) / 100 * $top);
         }
-        
+
         if ($left < 0) {
             $newWidth += $left;
             $left = 0;
         }
-        
+
         if ($top < 0) {
             $newHeight += $top;
             $top = 0;
         }
-        
+
         $newWidth = min($newWidth, $srcWidth - $left);
         $newHeight = min($newHeight, $srcHeight - $top);
         return [$left, $top, $newWidth, $newHeight];
     }
-    
-    
+
+
     /**
      * Sharpens image a little bit.
      */
     public function sharpen() {
-        
+
         imageconvolution($this->image, [ // my magic numbers ;)
             [-1, -1, -1],
             [-1, 24, -1],
@@ -587,8 +587,8 @@ final class AppGenerator {
         ], 16, 0);
         return $this;
     }
-    
-    
+
+
     /**
      * Puts another image into this image.
      * @param  Image
@@ -598,40 +598,40 @@ final class AppGenerator {
      * @return static
      */
     public function place(self $image, $left = 0, $top = 0, int $opacity = 100) {
-        
+
         $opacity = max(0, min(100, $opacity));
         if ($opacity === 0) {
             return $this;
         }
-        
+
         $width = $image->getWidth();
         $height = $image->getHeight();
-        
+
         if (self::isPercent($left)) {
             $left = (int) round(($this->getWidth() - $width) / 100 * $left);
         }
-        
+
         if (self::isPercent($top)) {
             $top = (int) round(($this->getHeight() - $height) / 100 * $top);
         }
-        
+
         $output = $input = $image->image;
         if ($opacity < 100) {
             $tbl = [];
             for ($i = 0; $i < 128; $i++) {
                 $tbl[$i] = round(127 - (127 - $i) * $opacity / 100);
             }
-            
+
             $output = imagecreatetruecolor($width, $height);
             imagealphablending($output, false);
-            
+
             if (!$image->isTrueColor()) {
-                
+
                 $input = $output;
                 imagefilledrectangle($output, 0, 0, $width, $height, imagecolorallocatealpha($output, 0, 0, 0, 127));
                 imagecopy($output, $image->image, 0, 0, 0, 0, $width, $height);
             }
-            
+
             for ($x = 0; $x < $width; $x++) {
                 for ($y = 0; $y < $height; $y++) {
                     $c = \imagecolorat($input, $x, $y);
@@ -639,16 +639,16 @@ final class AppGenerator {
                     \imagesetpixel($output, $x, $y, $c);
                 }
             }
-            
+
             imagealphablending($output, true);
         }
-        
+
         imagecopy($this->image, $output, $left, $top, 0, 0, $width, $height);
-        
+
         return $this;
     }
-    
-    
+
+
     /**
      * Saves image to the file. Quality is in the range 0..100 for JPEG (default 85), WEBP (default 80) and AVIF (default 30) and 0..9 for PNG (default 9).
      *
@@ -657,44 +657,44 @@ final class AppGenerator {
      * @param int $type
      */
     public function save(string $file, int $quality = null, int $type = null) {
-                
+
         if ($type === null) {
-            
-            $extensions = array_flip(self::FORMATS) + ["jpg" => self::JPEG];            
+
+            $extensions = array_flip(self::FORMATS) + ["jpg" => self::JPEG];
             $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-                        
+
             if (!isset($extensions[$ext])) {
                 throw new \InvalidArgumentException("Unsupported file extension '$ext'.");
             }
-            
+
             $type = $extensions[$ext];
         }
-        
+
         $this->output($type, $quality, $file);
     }
-    
-    
+
+
     /**
      * Outputs image to string. Quality is in the range 0..100 for JPEG (default 85), WEBP (default 80) and AVIF (default 30) and 0..9 for PNG (default 9).
      */
     public function toString(int $type = self::JPEG, int $quality = null): string {
-        
+
         return self::capture(function () use ($type, $quality) {
             $this->output($type, $quality);
         });
-            
-            
+
+
     }
-    
-    
+
+
     /**
      * Outputs image to string.
      */
     public function __toString(): string {
-        
+
         return $this->toString();
     }
-    
+
     /**
      * Outputs image to browser. Quality is in the range 0..100 for JPEG (default 85), WEBP (default 80) and AVIF (default 30) and 0..9 for PNG (default 9).
      *
@@ -702,60 +702,60 @@ final class AppGenerator {
      * @param int $quality
      */
     public function send(int $type = self::JPEG, int $quality = null) {
-        
+
         header('Content-Type: ' . self::typeToMimeType($type));
-        
+
         $this->output($type, $quality);
     }
-    
-    
+
+
     /**
      * Outputs image to browser or file.
      * @throws \InvalidArgumentException
      * @throws \Exception
      */
     private function output(int $type, int $quality = null, string $file = null) {
-        
-        
+
+
         switch ($type) {
             case self::JPEG:
-                
+
                 $quality = $quality === null ? 85 : max(0, min(100, $quality));
                 $success = @imagejpeg($this->image, $file, $quality); // @ is escalated to exception
-                
+
             break;
-                
+
             case self::PNG:
-                
+
                 $quality = $quality === null ? 9 : max(0, min(9, $quality));
                 $success = @imagepng($this->image, $file, $quality); // @ is escalated to exception
-                
+
             break;
-                
+
             case self::GIF:
-                
+
                 $success = @imagegif($this->image, $file); // @ is escalated to exception
-                
+
             break;
-                
+
             case self::WEBP:
-                
+
                 $quality = $quality === null ? 80 : max(0, min(100, $quality));
                 $success = @imagewebp($this->image, $file, $quality); // @ is escalated to exception
-                
+
              break;
-                
+
             default:
                 throw new \InvalidArgumentException("Unsupported image type '$type'.");
         }
-        
+
         if (!$success) {
-            
+
             throw new \Exception(static::getLastError() ?: 'Unknown error');
         }
     }
-    
-    
+
+
     /**
      * Call to undefined method.
      *
@@ -765,44 +765,50 @@ final class AppGenerator {
      * @return mixed
      */
     public function __call(string $name, array $args) {
-        
+
         $function = "image" . $name;
-        
+
         if (!function_exists($function)) {
-            
+
             throw new \Exception(sprintf("Call to undefined method: %s::%s()", static::class, $name));
         }
-        
+
         foreach ($args as $key => $value) {
             if ($value instanceof self) {
-                
+
                 $args[$key] = $value->getImageResource();
-                
+
             } elseif (is_array($value) && isset($value['red'])) { // rgb
-                
+
                 $args[$key] = imagecolorallocatealpha($this->image, $value['red'], $value['green'], $value['blue'], $value['alpha']) ?: imagecolorresolvealpha( $this->image, $value['red'], $value['green'], $value['blue'], $value['alpha']);
             }
         }
-        
+
         $res = $function($this->image, ...$args);
-        
+
         return (is_resource($res) && get_resource_type($res) === "gd") ? $this->setImageResource($res) : $res;
     }
     
-    
-    /**
-     *
-     */
-    public function __clone() {
-        
-        ob_start(function () {});
-        
-        imagegd2($this->image);
-        
-        $this->setImageResource(imagecreatefromstring(ob_get_clean()));
+    public function __clone()
+    {
+        $w = $this->getWidth();
+        $h = $this->getHeight();
+
+        // nový truecolor obrázek
+        $new = imagecreatetruecolor($w, $h);
+
+        // zachovat alfa kanál
+        imagealphablending($new, false);
+        imagesavealpha($new, true);
+
+        // zkopírovat obsah
+        imagecopy($new, $this->image, 0, 0, 0, 0, $w, $h);
+
+        // uložit nový resource
+        $this->setImageResource($new);
     }
-    
-    
+
+
     /**
      *
      * @param int|string $num
@@ -810,31 +816,31 @@ final class AppGenerator {
      * @return bool
      */
     private static function isPercent( &$num): bool {
-        
+
         if (is_string($num) && static::str_ends_with($num, '%')) {
-            
+
             $num = (float) substr($num, 0, -1);
-            
+
             return true;
-            
+
         } elseif (is_int($num) || $num === (string) (int) $num) {
-            
+
             $num = (int) $num;
-            
+
             return false;
         }
-        
+
         throw new \InvalidArgumentException("Expected dimension in int|string, '$num' given.");
     }
-    
-    
+
+
     /**
      * Prevents serialization.
      */
     public function __sleep(): array {
-        
+
         throw new \LogicException('You cannot serialize or unserialize ' . self::class . ' instances.');
     }
 
-    
+
 }
