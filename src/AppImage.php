@@ -34,7 +34,8 @@ use Throwable;
  * @package     Lemonade Framework
  * @subpackage  Image
  * @category    Core
- * @author      Honza Mudrák
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
  * @since       1.0.0
  * @see         ImageProvider

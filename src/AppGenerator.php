@@ -707,54 +707,117 @@ final class AppGenerator {
 
         $this->output($type, $quality);
     }
-
-
     /**
      * Outputs image to browser or file.
+     *
+     * Cache write failures are tolerated (cache is best-effort).
+     * Only stdout output failures throw exceptions.
+     *
      * @throws \InvalidArgumentException
      * @throws \Exception
      */
-    private function output(int $type, int $quality = null, string $file = null) {
+    private function output(int $type, int $quality = null, string $file = null): void
+    {
+        $targetFile = $file;
+        $tmpFile    = null;
+        $isCache    = ($file !== null);
 
+        // === CACHE PRE-CHECK (jiný request už to mohl stihnout) ===
+        if ($isCache && is_file($targetFile)) {
+            return;
+        }
 
+        if ($isCache) {
+            $dir = dirname($targetFile);
+            if (!is_dir($dir)) {
+                @mkdir($dir, 0777, true);
+            }
+
+            // unikátní tmp (PID + random)
+            $tmpFile = $targetFile . '.tmp.' . getmypid() . '.' . bin2hex(random_bytes(4));
+            $file    = $tmpFile;
+        }
+
+        // === VLASTNÍ ZÁPIS ===
         switch ($type) {
             case self::JPEG:
-
-                $quality = $quality === null ? 85 : max(0, min(100, $quality));
-                $success = @imagejpeg($this->image, $file, $quality); // @ is escalated to exception
-
-            break;
+                $quality = $quality ?? 85;
+                $success = @imagejpeg($this->image, $file, max(0, min(100, $quality)));
+                break;
 
             case self::PNG:
-
-                $quality = $quality === null ? 9 : max(0, min(9, $quality));
-                $success = @imagepng($this->image, $file, $quality); // @ is escalated to exception
-
-            break;
+                $quality = $quality ?? 9;
+                $success = @imagepng($this->image, $file, max(0, min(9, $quality)));
+                break;
 
             case self::GIF:
-
-                $success = @imagegif($this->image, $file); // @ is escalated to exception
-
-            break;
+                $success = @imagegif($this->image, $file);
+                break;
 
             case self::WEBP:
-
-                $quality = $quality === null ? 80 : max(0, min(100, $quality));
-                $success = @imagewebp($this->image, $file, $quality); // @ is escalated to exception
-
-             break;
+                $quality = $quality ?? 80;
+                $success = @imagewebp($this->image, $file, max(0, min(100, $quality)));
+                break;
 
             default:
                 throw new \InvalidArgumentException("Unsupported image type '$type'.");
         }
 
+        // === SELHÁNÍ ZÁPISU ===
         if (!$success) {
 
-            throw new \Exception(static::getLastError() ?: 'Unknown error');
+            if ($tmpFile && is_file($tmpFile)) {
+                @unlink($tmpFile);
+            }
+
+            // CACHE = tolerujeme
+            if ($isCache) {
+                if (function_exists('log_message')) {
+                    log_message(
+                        'error',
+                        sprintf(
+                            'Image cache write failed (%s): %s',
+                            $targetFile,
+                            static::getLastError() ?: 'unknown GD error'
+                        )
+                    );
+                }
+                return;
+            }
+
+            // STDOUT = chyba
+            throw new \Exception(
+                static::getLastError() ?: 'Image output failed.'
+            );
+        }
+
+        // === ATOMICKÝ PŘESUN DO CACHE ===
+        if ($tmpFile !== null) {
+
+            // jiný request mezitím vytvořil cache
+            if (is_file($targetFile)) {
+                @unlink($tmpFile);
+                return;
+            }
+
+            // Windows-safe rename
+            if (!@rename($tmpFile, $targetFile)) {
+
+                @unlink($targetFile);
+
+                if (!@rename($tmpFile, $targetFile)) {
+                    @unlink($tmpFile);
+
+                    if (function_exists('log_message')) {
+                        log_message(
+                            'error',
+                            sprintf('Failed to move image cache file: %s', $targetFile)
+                        );
+                    }
+                }
+            }
         }
     }
-
 
     /**
      * Call to undefined method.
@@ -788,7 +851,7 @@ final class AppGenerator {
 
         return (is_resource($res) && get_resource_type($res) === "gd") ? $this->setImageResource($res) : $res;
     }
-    
+
     public function __clone()
     {
         $w = $this->getWidth();

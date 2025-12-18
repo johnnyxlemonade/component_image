@@ -14,7 +14,8 @@ namespace Lemonade\Image\Providers;
  * @package     Lemonade Framework
  * @subpackage  Image\Providers
  * @category    Environment
- * @author      Honza Mudrak
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
  * @since       1.0.0
  */

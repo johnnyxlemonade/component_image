@@ -34,7 +34,8 @@ use function md5;
  * @package     Lemonade Framework
  * @subpackage  Image
  * @category    Parser
- * @author      Honza Mudrák
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
  * @since       1.0.0
  * @see         ImageOptionsDTO
@@ -113,7 +114,7 @@ final class ImageOptionsParser
             $this->parseKeyValue($item);
         }
     }
-    
+
     /**
      * Zpracuje size preset (např. md, md2).
      * Preset je syntaktický cukr nad width/height a po parsování

@@ -28,7 +28,8 @@ use function md5;
  * @package     Lemonade Framework
  * @subpackage  Image
  * @category    DTO
- * @author      Honza Mudrák
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
  * @since       1.0.0
  * @see         ImageOptionsParser

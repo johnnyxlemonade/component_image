@@ -6,275 +6,283 @@ use Lemonade\Image\AppGenerator;
 use Lemonade\Image\Exceptions\IOException;
 use Lemonade\Image\Utils\FileSystem;
 
+/**
+ * FileProvider
+ *
+ * Provider zodpovědný za práci se soubory v image pipeline.
+ * Řeší mapování:
+ *
+ * - originálního souboru (filesystem)
+ * - cache variant (PNG / WebP)
+ * - placeholder / error obrázků
+ *
+ * a jejich bezpečné odeslání klientovi.
+ *
+ * Zodpovědnosti:
+ * - sestavení cest k originálu a cache na základě DirectoryProvider + DataProvider
+ * - deterministický cache klíč (origin + args)
+ * - rozhodování o výstupu (WebP vs originální formát)
+ * - obsluha HTTP cache hlaviček (If-Modified-Since → 304)
+ * - bezpečné čtení a odesílání cache souborů
+ * - mazání cache při chybových stavech
+ *
+ * FileProvider:
+ * - negeneruje obrázky
+ * - neřeší transformace
+ * - neřeší validaci vstupů
+ *
+ * Slouží výhradně jako „file & cache orchestrace“ mezi:
+ * - DirectoryProvider (kde leží data)
+ * - DataProvider (jaká varianta se chce)
+ * - ImageProvider (kdo obrázek vytvoří / odešle)
+ *
+ * @package     Lemonade Framework
+ * @subpackage  Image\Providers
+ * @category    Providers
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
+ * @see         DirectoryProvider
+ * @see         DataProvider
+ * @see         ImageProvider
+ * @see         WebpProvider
+ */
 final class FileProvider
 {
+    private ?string $appFileFs       = null;
+    private ?string $appCacheFile    = null;
+    private ?string $appCacheWebp    = null;
+    private ?string $appMissingPng   = null;
+    private ?string $appMissingWebp  = null;
+
+    private DirectoryProvider $appDir;
+    private DataProvider $appData;
+
+    private int $localImageMTime = 0;
 
     /**
-     * Cesta k souboru (fs)
-     * @var string
+     * Vytvoří file provider kontext.
      */
-    private $_appFileFs = null;
+    public function __construct(
+        DirectoryProvider $dir,
+        DataProvider $data,
+        ?string $file = null
+    ) {
+        $this->appDir  = $dir;
+        $this->appData = $data;
 
-    /**
-     * Cesta k souboru (cache)
-     * @var string
-     */
-    private $_appCacheFile = null;
-
-    /**
-     * Cesta k souboru (webp cache)
-     * @var string
-     */
-    private $_appCacheWebp = null;
-
-    /**
-     * Placeholder (png)
-     * @var string
-     */
-    private $_appMissingPng = null;
-
-    /**
-     * Placeholder (webp)
-     * @var string
-     */
-    private $_appMissingWebp = null;
-
-    /**
-     * DirectoryProvider
-     * @var DirectoryProvider
-     */
-    private $_appDir;
-
-    /**
-     * DataProvider
-     * @var DataProvider
-     */
-    private $_appData;
-
-    /**
-     * LocalCache
-     * @var integer
-     */
-    private $_localImageMTime = 0;
-
-
-    /**
-     * Costructor
-     * @param DirectoryProvider $dir
-     * @param DataProvider $data
-     * @param string|null $file
-     */
-    public function __construct(DirectoryProvider $dir, DataProvider $data, string $file = null)
-    {
-
-        $this->_appDir = $dir;
-        $this->_appData = $data;
-
-        $this->_setFile(($file ?? "missing.png"));
+        $this->setFile($file ?? 'missing.png');
     }
 
-
     /**
-     *
-     * @return string
+     * Vrátí cestu k originálnímu souboru.
      */
     public function getFileFs(): ?string
     {
-
-        return $this->_appFileFs;
+        return $this->appFileFs;
     }
 
     /**
-     *
-     * @return string
+     * Vrátí cestu ke cache souboru.
      */
     public function getCacheFile(): ?string
     {
-
-        return $this->_appCacheFile;
+        return $this->appCacheFile;
     }
 
     /**
-     *
-     * @return string
+     * Vrátí cestu ke cache WebP souboru.
      */
     public function getCacheWebp(): ?string
     {
-
-        return $this->_appCacheWebp;
+        return $this->appCacheWebp;
     }
 
     /**
-     *
-     * @return string
+     * Vrátí cestu k PNG placeholderu.
      */
     public function getMissingPng(): ?string
     {
-
-        return $this->_appMissingPng;
+        return $this->appMissingPng;
     }
 
     /**
-     *
-     * @return string
+     * Vrátí cestu k WebP placeholderu.
      */
     public function getMissingWebp(): ?string
     {
-
-        return $this->_appMissingWebp;
+        return $this->appMissingWebp;
     }
 
     /**
-     * Existence souboru
-     *
-     * @param string|null $file
-     * @return bool
-     */
-    public function isFileExists(string $file = null): bool
-    {
-
-        if (empty($file)) {
-
-            return false;
-        }
-
-        return file_exists($file);
-    }
-
-    /**
-     * Vytvorit adresar
-     * @param string $dir
-     * @return void
-     */
-    public function createDirectory(string $dir): void
-    {
-
-        try {
-
-            FileSystem::createDir(dirname($dir));
-
-        } catch (IOException $e) {
-        }
-
-    }
-
-    /**
-     * Smazat soubory
-     * @return void
-     */
-    public function deleteCache(): void
-    {
-
-        try {
-
-            FileSystem::delete($this->getDirectory()->getCache());
-
-        } catch (IOException $e) {
-        }
-
-    }
-
-    /**
-     *
-     * @return DataProvider
+     * Vrátí data provider.
      */
     public function getData(): DataProvider
     {
-
-        return $this->_appData;
+        return $this->appData;
     }
 
-
     /**
-     * @return DirectoryProvider
+     * Vrátí directory provider.
      */
     public function getDirectory(): DirectoryProvider
     {
-
-        return $this->_appDir;
+        return $this->appDir;
     }
 
     /**
-     * @param string|null $file
-     * @return void
+     * Ověří existenci souboru.
      */
-    protected function _setFile(string $file = null): void
+    public function isFileExists(?string $file): bool
     {
-
-        $info = pathinfo($file);
-
-        $this->_appFileFs = sprintf("%s/%s.%s", $this->_appDir->getStorage(), $info["filename"], $info["extension"]);
-        $this->_appCacheFile = sprintf("%s/%s-%s.%s", $this->_appDir->getCache(), $info["filename"], $this->_appData->getHash(), $info["extension"]);
-        $this->_appCacheWebp = sprintf("%s/%s-%s.webp", $this->_appDir->getCache(), $info["filename"], $this->_appData->getHash());
-        $this->_appMissingPng = sprintf("./storage/0/cache/0/%s.png", $this->_appData->getHash());
-        $this->_appMissingWebp = sprintf("./storage/0/cache/0/%s.webp", $this->_appData->getHash());
-
+        return $file !== null && $file !== '' && file_exists($file);
     }
 
     /**
-     * @return bool
+     * Vytvoří adresář pro daný soubor.
+     */
+    public function createDirectory(string $dir): void
+    {
+        try {
+            FileSystem::createDir(dirname($dir));
+        } catch (IOException) {
+            // silent by design
+        }
+    }
+
+    /**
+     * Smaže cache adresář.
+     */
+    public function deleteCache(): void
+    {
+        try {
+            FileSystem::delete($this->appDir->getCache());
+        } catch (IOException) {
+            // silent by design
+        }
+    }
+
+    /**
+     * Ošetří HTTP 304 Not Modified.
      */
     public function sendBrowserImage(): bool
     {
-
-        if (!empty($_SERVER["HTTP_IF_MODIFIED_SINCE"])) {
-
-            $fTime = 0;
-            $sTime = (int)strtotime($_SERVER["HTTP_IF_MODIFIED_SINCE"]);
-
-            if ($this->isFileExists($this->getFileFs())) {
-
-                $file = (WebpProvider::hasSupport() ? $this->getCacheWebp() : $this->getCacheFile());
-
-                if ($this->isFileExists($file)) {
-
-                    $fTime = @filemtime($file);
-                }
-
-            }
-
-            if (!$fTime || ((int)$sTime < 1) || ($sTime < $fTime)) {
-
-                return false;
-
-            } else {
-
-
-                ImageProvider::setNoModified();
-
-                return true;
-            }
+        if (!ServerProvider::has('HTTP_IF_MODIFIED_SINCE')) {
+            return false;
         }
 
-        return false;
+        $sTime = (int) strtotime(
+            ServerProvider::get('HTTP_IF_MODIFIED_SINCE')
+        );
 
+        if ($sTime < 1 || !$this->isFileExists($this->appFileFs)) {
+            return false;
+        }
+
+        $cacheFile = $this->resolveCacheFile();
+        if (!$this->isFileExists($cacheFile)) {
+            return false;
+        }
+
+        $fTime = (int) @filemtime($cacheFile);
+        if ($fTime === 0 || $sTime < $fTime) {
+            return false;
+        }
+
+        ImageProvider::setNoModified();
+        return true;
     }
 
-
     /**
-     * @return bool
+     * Odešle existující cache obrázek.
      */
     public function sendCacheImage(): bool
     {
-
-        if ($this->isFileExists($this->getFileFs())) {
-
-            $file = (WebpProvider::hasSupport() ? $this->getCacheWebp() : $this->getCacheFile());
-
-            if ($this->isFileExists($file)) {
-
-                $ext = (WebpProvider::hasSupport() ? AppGenerator::WEBP : AppGenerator::detectTypeFromFile($file));
-                $data = file_get_contents($file);
-                $size = filesize($file);
-
-                ImageProvider::sendHeader($ext, $size);
-                ImageProvider::sendContent($data);
-            }
+        if (!$this->isFileExists($this->appFileFs)) {
+            return false;
         }
 
-        return false;
+        $cacheFile = $this->resolveCacheFile();
+        if (!$this->isFileExists($cacheFile)) {
+            return false;
+        }
 
+        $ext  = $this->resolveOutputType($cacheFile);
+        $data = file_get_contents($cacheFile);
+        $size = filesize($cacheFile);
+
+        ImageProvider::sendHeader($ext, $size);
+        ImageProvider::sendContent($data);
+
+        return true;
     }
 
+    /**
+     * Inicializuje cesty k souborům.
+     */
+    protected function setFile(string $file): void
+    {
+        $info = pathinfo($file);
 
+        $this->appFileFs = sprintf(
+            '%s/%s.%s',
+            $this->appDir->getStorage(),
+            $info['filename'],
+            $info['extension']
+        );
+
+        // === ROZŠÍŘENÝ HASH (origin + args) ===
+        $cacheHash = substr(
+            sha1($this->appFileFs . '|' . $this->appData->getHash()),
+            0,
+            32
+        );
+
+        $this->appCacheFile = sprintf(
+            '%s/%s-%s.%s',
+            $this->appDir->getCache(),
+            $info['filename'],
+            $cacheHash,
+            $info['extension']
+        );
+
+        $this->appCacheWebp = sprintf(
+            '%s/%s-%s.webp',
+            $this->appDir->getCache(),
+            $info['filename'],
+            $cacheHash
+        );
+
+        // error / missing – pouze podle varianty
+        $this->appMissingPng = sprintf(
+            './storage/0/cache/0/%s.png',
+            $this->appData->getHash()
+        );
+
+        $this->appMissingWebp = sprintf(
+            './storage/0/cache/0/%s.webp',
+            $this->appData->getHash()
+        );
+    }
+
+    /**
+     * Vrátí správný cache soubor podle podpory WebP.
+     */
+    private function resolveCacheFile(): ?string
+    {
+        return WebpProvider::hasSupport()
+            ? $this->appCacheWebp
+            : $this->appCacheFile;
+    }
+
+    /**
+     * Detekuje MIME typ pro odeslání cache souboru.
+     */
+    private function resolveOutputType(string $file): int
+    {
+        return WebpProvider::hasSupport()
+            ? AppGenerator::WEBP
+            : AppGenerator::detectTypeFromFile($file);
+    }
 }
