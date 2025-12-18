@@ -2,134 +2,176 @@
 
 namespace Lemonade\Image\Providers;
 
+use function rtrim;
+use function sprintf;
+use function chunk_split;
+use function str_pad;
+use function dechex;
+use const DIRECTORY_SEPARATOR;
+use const PHP_EOL;
+use const STR_PAD_LEFT;
+
+/**
+ * DirectoryProvider
+ *
+ * Provider zodpovědný za sestavení adresářové struktury
+ * pro originální soubory a cache varianty obrázků.
+ *
+ * Řeší:
+ * - mapování storage typu na adresář
+ * - generování hierarchické struktury podle ID
+ * - oddělení storage a cache stromu
+ *
+ * @package     Lemonade Framework
+ * @subpackage  Image\Providers
+ * @category    Providers
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
+ */
 final class DirectoryProvider
 {
-
     /**
-     * Vychozi
-     * @var array
+     * Mapování typů uložišť na interní ID.
      */
-    private $_appModule = [
-        "template" => "template",
-        "thumbnail" => 1,
-        "gallery" => 2,
-        "editor" => 5
+    private const MODULE_MAP = [
+        'template'  => 'template',
+        'thumbnail' => 1,
+        'gallery'   => 2,
+        'editor'    => 5,
     ];
 
     /**
-     * Formatovani uloziste
-     * @var string
+     * Formát adresářové struktury (OS-safe).
      */
-    private $_appFormat = "./%s/%s/%s/%s";
+    private string $pathFormat;
 
     /**
-     * Level zanoreni adresaru
-     * @var integer
+     * Úroveň zanoření adresářů.
      */
-    private $_appLevel = 0;
+    private int $level = 0;
 
     /**
-     * Storage adresar
-     * @var string
+     * Cesta k originálním souborům.
      */
-    private $_appStorageDirectory = null;
+    private ?string $storageDirectory = null;
 
     /**
-     * Cacche adresar
-     * @var string
+     * Cesta ke cache souborům.
      */
-    private $_appCacheDirectory = null;
+    private ?string $cacheDirectory = null;
 
-    /**
-     * @param int $level
-     * @param string|null $storageTypId
-     * @param string|null $moduleId
-     * @param string|null $artId
-     */
-    public function __construct(int $level, string $storageTypId = null, string $moduleId = null, string $artId = null)
-    {
+    public function __construct(
+        int $level,
+        string|int|null $storageTypeId = null,
+        string|int|null $moduleId = null,
+        string|int|null $artId = null
+    ) {
 
-        $this->_setLevel($level);
-        $this->_setDirectory($storageTypId, $moduleId, $artId);
+        $this->pathFormat = self::pathFormat();
+
+        $this->setLevel($level);
+        $this->setDirectories($storageTypeId, $moduleId, $artId);
     }
 
     /**
-     * @return string|null
+     * Vrátí cestu ke storage adresáři.
      */
     public function getStorage(): ?string
     {
-
-        return $this->_appStorageDirectory;
+        return $this->storageDirectory;
     }
 
     /**
-     * @return string|null
+     * Vrátí cestu ke cache adresáři.
      */
     public function getCache(): ?string
     {
-
-        return $this->_appCacheDirectory;
-    }
-
-
-    /**
-     * @param int $level
-     * @return void
-     */
-    protected function _setLevel(int $level): void
-    {
-
-        $this->_appLevel = $level;
+        return $this->cacheDirectory;
     }
 
     /**
-     * Adresare
-     *
-     * @param string|null $storageTypId
-     * @param string|null $moduleId
-     * @param string|null $artId
-     * @return void
+     * Nastaví úroveň zanoření adresářů.
      */
-    protected function _setDirectory(string $storageTypId = null, string $moduleId = null, string $artId = null)
+    protected function setLevel(int $level): void
     {
-
-        $this->_appStorageDirectory = sprintf($this->_appFormat, "storage", $moduleId, $this->_getDirectoryId($storageTypId), $this->_getFileDirectoryStructure($artId));
-        $this->_appCacheDirectory = sprintf($this->_appFormat, "storage/0/cache", $moduleId, $this->_getDirectoryId($storageTypId), $this->_getFileDirectoryStructure($artId));
-
+        $this->level = $level;
     }
 
     /**
-     * @return int
+     * Sestaví storage a cache adresáře.
      */
-    protected function _getLevel(): int
-    {
+    protected function setDirectories(
+        string|int|null $storageTypeId = null,
+        string|int|null $moduleId = null,
+        string|int|null $artId = null
+    ): void {
+        $directoryId = $this->resolveDirectoryId($storageTypeId);
+        $structure   = $this->buildDirectoryStructure($artId);
 
-        return $this->_appLevel;
+        $this->storageDirectory = sprintf(
+            $this->pathFormat,
+            'storage',
+            $moduleId,
+            $directoryId,
+            $structure
+        );
+
+        $this->cacheDirectory = sprintf(
+            $this->pathFormat,
+            'storage' . DIRECTORY_SEPARATOR . '0' . DIRECTORY_SEPARATOR . 'cache',
+            $moduleId,
+            $directoryId,
+            $structure
+        );
     }
 
     /**
-     * Generovani adresarove struktury pro konkretni id
-     *
-     * @param string|null $artId
-     * @return string
+     * Vrátí aktuální úroveň zanoření.
      */
-    private function _getFileDirectoryStructure(string $artId = null): string
+    protected function getLevel(): int
     {
-
-        return rtrim(chunk_split(str_pad(dechex((int)$artId), $this->_getLevel(), "0", STR_PAD_LEFT), 2, "/"), "/");
+        return $this->level;
     }
 
     /**
-     * Id uloziste
-     *
-     * @param string|null $typId
-     * @return string
+     * Vygeneruje hierarchickou strukturu adresářů z ID.
      */
-    private function _getDirectoryId(string $typId = null): string
+    private function buildDirectoryStructure(string|int|null $artId): string
     {
-
-        return (string)($this->_appModule[$typId] ?? $typId ?? "0");
+        return rtrim(
+            chunk_split(
+                str_pad(
+                    dechex((int) $artId),
+                    $this->getLevel(),
+                    '0',
+                    STR_PAD_LEFT
+                ),
+                2,
+                DIRECTORY_SEPARATOR
+            ),
+            DIRECTORY_SEPARATOR
+        );
     }
 
+    /**
+     * Přeloží typ uložiště na adresářový identifikátor.
+     */
+    private function resolveDirectoryId(?string $typeId): string
+    {
+        return (string) (self::MODULE_MAP[$typeId] ?? $typeId ?? '0');
+    }
 
+    private static function pathFormat(): string
+    {
+        $ds = DIRECTORY_SEPARATOR;
+
+        return
+            '.' . $ds .
+            '%s' . $ds .
+            '%s' . $ds .
+            '%s' . $ds .
+            '%s';
+    }
 }

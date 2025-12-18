@@ -54,14 +54,13 @@ final class AppImage
      * Entry-point volaný z frameworku
      */
     public static function factoryApp(
-        int     $level,
-        ?string $storageTypId,
-        ?string $moduleId,
-        ?string $artId,
-        ?string $baseName,
-        ?string $args
-    ): void
-    {
+        int                $level,
+        string|int|null    $storageTypId,
+        string|int|null    $moduleId,
+        string|int|null    $artId,
+        ?string            $baseName,
+        ?string            $args
+    ): void {
         $app = new self(
             level: $level,
             storageTypId: $storageTypId,
@@ -78,25 +77,25 @@ final class AppImage
      * Vytvoří kontext providerů (adresář, data, soubor)
      */
     protected function __construct(
-        int     $level,
-        ?string $storageTypId,
-        ?string $moduleId,
-        ?string $artId,
+        int $level,
+        string|int|null $storageTypId,
+        string|int|null $moduleId,
+        string|int|null $artId,
         ?string $baseName,
         ?string $args
-    )
-    {
-        $this->provider = new FileProvider(
-            dir: new DirectoryProvider(
-                level: $level,
-                storageTypId: $storageTypId,
-                moduleId: $moduleId,
-                artId: $artId
-            ),
-            data: new DataProvider($args),
-            file: $baseName
+    ) {
+        $directory = $this->createDirectoryProvider(
+            $level,
+            $storageTypId,
+            $moduleId,
+            $artId
         );
 
+        $this->provider = $this->createFileProvider(
+            $directory,
+            $baseName,
+            $args
+        );
     }
 
     /**
@@ -141,5 +140,37 @@ final class AppImage
 
             ImageProvider::imageError($this->provider);
         }
+    }
+
+    /**
+     * Vytvoří DirectoryProvider pro aktuální kontext obrázku.
+     */
+    protected function createDirectoryProvider(
+        int $level,
+        string|int|null $storageTypId,
+        string|int|null $moduleId,
+        string|int|null $artId
+    ): DirectoryProvider {
+        return new DirectoryProvider(
+            level: $level,
+            storageTypeId: $storageTypId,
+            moduleId: $moduleId,
+            artId: $artId
+        );
+    }
+
+    /**
+     * Vytvoří FileProvider včetně DataProvider.
+     */
+    protected function createFileProvider(
+        DirectoryProvider $directory,
+        ?string $baseName,
+        ?string $args
+    ): FileProvider {
+        return new FileProvider(
+            dir: $directory,
+            data: new DataProvider($args),
+            file: $baseName
+        );
     }
 }
