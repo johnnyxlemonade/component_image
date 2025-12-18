@@ -5,6 +5,7 @@ namespace Lemonade\Image\Providers;
 use Lemonade\Image\AppGenerator;
 use Lemonade\Image\ImageOptionsDTO;
 use DateTimeImmutable;
+use RuntimeException;
 
 /**
  * ImageProvider
@@ -108,7 +109,10 @@ final class ImageProvider
 
         ServerHeaderProvider::setContentType($mimeStr);
         ServerHeaderProvider::setCacheHeaders($lifetime, $expiresAt);
-        ServerHeaderProvider::setContentLength($size);
+
+        if ($size > 0) {
+            ServerHeaderProvider::setContentLength($size);
+        }
 
         // Conditional GET
         $ifMod      = ServerProvider::get("HTTP_IF_MODIFIED_SINCE");
@@ -262,6 +266,7 @@ final class ImageProvider
     private static function processResize(AppGenerator $src, ImageOptionsDTO $opt): AppGenerator
     {
         return match ($opt->getCrop()) {
+            -1 => clone $src, // ORIGINAL
             1 => self::resizeCropWithCanvas($src, $opt),
             2 => self::resizeExact($src, $opt),
             3 => self::resizeFit($src, $opt),
@@ -384,7 +389,12 @@ final class ImageProvider
     ): never
     {
         $data = $image->toString($imgExt, $quality);
-        self::sendHeader($imgExt);
+
+        if ($data === '' || $data === null) {
+            throw new RuntimeException('Image rendering failed');
+        }
+
+        self::sendHeader($imgExt, strlen($data));
         self::sendContent($data);
     }
 
