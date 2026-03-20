@@ -6,6 +6,7 @@ use Lemonade\Image\Providers\DirectoryProvider;
 use Lemonade\Image\Providers\FileProvider;
 use Lemonade\Image\Providers\DataProvider;
 use Lemonade\Image\Providers\ImageProvider;
+use Lemonade\Image\Utils\FileSystem;
 use Throwable;
 
 /**
@@ -45,10 +46,10 @@ use Throwable;
  */
 final class AppImage
 {
-    /**
-     * File + directory + data context pro aktuální požadavek
-     */
-    private FileProvider $provider;
+    private ?DirectoryProvider $directory = null;
+    private ?FileProvider $provider = null;
+    private ?DataProvider $data = null;
+    private ?FileSystem $filesystem = null;
 
     /**
      * Entry-point volaný z frameworku
@@ -77,26 +78,13 @@ final class AppImage
      * Vytvoří kontext providerů (adresář, data, soubor)
      */
     protected function __construct(
-        int $level,
-        string|int|null $storageTypId,
-        string|int|null $moduleId,
-        string|int|null $artId,
-        ?string $baseName,
-        ?string $args
-    ) {
-        $directory = $this->createDirectoryProvider(
-            $level,
-            $storageTypId,
-            $moduleId,
-            $artId
-        );
-
-        $this->provider = $this->createFileProvider(
-            $directory,
-            $baseName,
-            $args
-        );
-    }
+        private readonly int $level,
+        private readonly string|int|null $storageTypId,
+        private readonly string|int|null $moduleId,
+        private readonly string|int|null $artId,
+        private readonly ?string $baseName,
+        private readonly ?string $args
+    ) {}
 
     /**
      * Hlavní workflow:
@@ -107,30 +95,33 @@ final class AppImage
      */
     public function run(): void
     {
+        $provider = $this->getProvider();
+
         try {
+
             // 1) klient již má obrazek (304)
-            if ($this->provider->sendBrowserImage()) {
+            if ($provider->sendBrowserImage()) {
                 return;
             }
 
             // 2) existuje cache verze
-            if ($this->provider->sendCacheImage()) {
+            if ($provider->sendCacheImage()) {
                 return;
             }
 
             // 3) existuje originál → vytvořit variantu
-            if ($this->provider->isFileExists($this->provider->getFileFs())) {
-                ImageProvider::imageCreate($this->provider);
+            if ($provider->isFileExists($provider->getFileFs())) {
+                ImageProvider::imageCreate($provider);
                 return;
             }
 
             // 4) neexistuje → error image
-            $this->provider->deleteCache();
-            ImageProvider::imageError($this->provider);
+            $provider->deleteCache();
+            ImageProvider::imageError($provider);
 
         } catch (Throwable $e) {
 
-            $data = $this->provider->getData();
+            $data = $provider->getData();
 
             // fallback minimálních rozměrů
             if ($data->isMissingAllSize()) {
@@ -138,39 +129,38 @@ final class AppImage
                 $data->setHeight(600);
             }
 
-            ImageProvider::imageError($this->provider);
+            ImageProvider::imageError($provider);
         }
     }
 
-    /**
-     * Vytvoří DirectoryProvider pro aktuální kontext obrázku.
-     */
-    protected function createDirectoryProvider(
-        int $level,
-        string|int|null $storageTypId,
-        string|int|null $moduleId,
-        string|int|null $artId
-    ): DirectoryProvider {
-        return new DirectoryProvider(
-            level: $level,
-            storageTypeId: $storageTypId,
-            moduleId: $moduleId,
-            artId: $artId
+    private function getDirectory(): DirectoryProvider
+    {
+        return $this->directory ??= new DirectoryProvider(
+            level: $this->level,
+            storageTypeId: $this->storageTypId,
+            moduleId: $this->moduleId,
+            artId: $this->artId
         );
     }
 
-    /**
-     * Vytvoří FileProvider včetně DataProvider.
-     */
-    protected function createFileProvider(
-        DirectoryProvider $directory,
-        ?string $baseName,
-        ?string $args
-    ): FileProvider {
-        return new FileProvider(
-            dir: $directory,
-            data: new DataProvider($args),
-            file: $baseName
+    private function getData(): DataProvider
+    {
+        return $this->data ??= new DataProvider($this->args);
+    }
+
+    private function getFilesystem(): FileSystem
+    {
+        return $this->filesystem ??= new FileSystem();
+    }
+
+    private function getProvider(): FileProvider
+    {
+        return $this->provider ??= new FileProvider(
+            dir: $this->getDirectory(),
+            filesystem: $this->getFilesystem(),
+            data: $this->getData(),
+            file: $this->baseName
         );
     }
+
 }

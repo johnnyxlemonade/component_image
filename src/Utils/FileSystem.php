@@ -1,210 +1,317 @@
 <?php declare(strict_types=1);
 
-
 namespace Lemonade\Image\Utils;
 
-use Lemonade\Image\Traits\StaticTrait;
 use Lemonade\Image\Exceptions\IOException;
 use Lemonade\Image\Exceptions\InvalidStateException;
 
+use FilesystemIterator;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use SplFileInfo;
+
 /**
- * File system tool.
+ * FileSystem
+ *
+ * Lightweight filesystem utility for safe and consistent file operations.
+ *
+ * Provides:
+ * - directory creation (recursive)
+ * - file and directory copy (stream-based)
+ * - delete (files, directories, symlinks, Windows-safe)
+ * - rename / move
+ * - read (stream + shared lock)
+ * - write (atomic via temp file + rename)
+ *
+ * Guarantees:
+ * - atomic writes (no partial files)
+ * - basic race-condition handling
+ * - consistent exception-based error handling
+ *
+ * @package     Lemonade Framework
+ * @subpackage  Image
+ * @category    Utils
+ * @license     MIT
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
  */
-class FileSystem {
+final class FileSystem
+{
+    public function createDir(string $dir, int $mode = 0777): void
+    {
+        if (!is_dir($dir) && !@mkdir($dir, $mode, true) && !is_dir($dir)) {
+            throw new IOException("Unable to create directory '$dir'. " . $this->getLastError());
+        }
+    }
 
-    use StaticTrait;
+    public function copy(string $source, string $dest, bool $overwrite = true): void
+    {
+        if (stream_is_local($source) && !file_exists($source)) {
+            throw new IOException("File or directory '$source' not found.");
+        }
 
-	/**
-	 * Vytvorit adresare
-	 * @param mixed $dir
-	 * @param number $mode
-	 * @throws IOException
-	 */
-	public static function createDir( $dir, $mode = 0777) {
-	    
-		if (!is_dir($dir) && !@mkdir($dir, $mode, true) && !is_dir($dir)) { 
-		    
-			throw new IOException("Unable to create directory '$dir'. " . self::getLastError());
-		}
-	}
+        if (!$overwrite && file_exists($dest)) {
+            throw new InvalidStateException("File or directory '$dest' already exists.");
+        }
 
+        if (is_dir($source)) {
+            $this->createDir($dest);
 
-	/**
-	 * Zkopirovat soubor do adresare
-	 * @param mixed $source
-	 * @param mixed $dest
-	 * @param boolean $overwrite
-	 * @throws IOException
-	 * @throws InvalidStateException
-	 */
-	public static function copy($source, $dest, $overwrite = true) {
-	    
-		if (stream_is_local($source) && !file_exists($source)) {
-		    
-		    throw new IOException("File or directory '$source' not found.");
+            // vyčistit cílový adresář
+            foreach ($this->iterateDirectory($dest) as $item) {
+                $this->delete($item->getPathname());
+            }
 
-		} elseif (!$overwrite && file_exists($dest)) {
-		    
-			throw new InvalidStateException("File or directory '$dest' already exists.");
+            // rekurzivní kopie (bez závislosti na iteratoru)
+            $base = rtrim($source, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
-		} elseif (is_dir($source)) {
-			
-		    static::createDir($dest);
-			
-			foreach (new \FilesystemIterator($dest) as $item) {
-			    
-				static::delete($item->getPathname());
-			}
-			
-			foreach ($iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($source, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST) as $item) {
-				
-			    if ($item->isDir()) {
-					
-			        static::createDir($dest . '/' . $iterator->getSubPathName());
-					
-				} else {
-					
-				    static::copy($item->getPathname(), $dest . '/' . $iterator->getSubPathName());
-				}
-			}
+            foreach ($this->iterateRecursive($source) as $item) {
+                if ($item->isLink()) { // ignore symlinks
+                    continue;
+                }
 
-		} else {
-		    
-			static::createDir(dirname($dest));
-			
-			if (@stream_copy_to_stream(fopen($source, 'r'), fopen($dest, 'w')) === false) { 
-			    
-			    throw new IOException("Unable to copy file '$source' to '$dest'. " . self::getLastError());
-			}
-		}
-	}
+                $relativePath = substr($item->getPathname(), strlen($base));
+                $target = $dest . '/' . $relativePath;
 
-	/**
-	 * Smazat soubor/adresar
-	 * @param mixed $path
-	 * @throws IOException
-	 * @return void
-	 */
-	public static function delete($path) {
-	    
-		if (is_file($path) || is_link($path)) {
-		
-		    $func = DIRECTORY_SEPARATOR === '\\' && is_dir($path) ? 'rmdir' : 'unlink';
-			
-			if (!@$func($path)) {
-			    
-				throw new IOException("Unable to delete '$path'. " . self::getLastError());
-			}
+                if ($item->isDir()) {
+                    $this->createDir($target);
+                } else {
+                    $this->copy($item->getPathname(), $target);
+                }
+            }
 
-		} elseif (is_dir($path)) {
-		    
-			foreach (new \FilesystemIterator($path) as $item) {
-			    
-				static::delete($item->getPathname());
-			}
-			
-			if (!@rmdir($path)) {
-			    
-				throw new IOException("Unable to delete directory '$path'. " . self::getLastError());
-			}
-		}
-	}
+            return;
+        }
 
-	/**
-	 * Prejmenovat soubor/adresar
-	 * @param mixed $name
-	 * @param mixed $newName
-	 * @param boolean $overwrite
-	 * @throws InvalidStateException
-	 * @throws IOException
-	 */
-	public static function rename($name, $newName, $overwrite = true) {
-	    
-		if (!$overwrite && file_exists($newName)) {
-		    
-			throw new InvalidStateException("File or directory '$newName' already exists.");
+        $this->createDir(dirname($dest));
 
-		} elseif (!file_exists($name)) {
-		    
-			throw new IOException("File or directory '$name' not found.");
+        $in = $this->open($source, 'r');
+        $out = $this->open($dest, 'w');
 
-		} else {
-			
-		    static::createDir(dirname($newName));
-			
-			if (realpath($name) !== realpath($newName)) {
-			
-			    static::delete($newName);
-			}
-			
-			if (!@rename($name, $newName)) {
-			    
-				throw new IOException("Unable to rename file or directory '$name' to '$newName'. " . self::getLastError());
-			}
-		}
-	}
+        if (stream_copy_to_stream($in, $out) === false) {
+            fclose($in);
+            fclose($out);
+            throw new IOException("Unable to copy file '$source' to '$dest'. " . $this->getLastError());
+        }
 
+        fclose($in);
+        fclose($out);
+    }
 
-	/**
-	 * Precist soubor
-	 * 
-	 * @param string $file
-	 * @throws IOException
-	 * @return string
-	 */
-	public static function read(string $file) {
-	    
-		$content = @file_get_contents($file); 
-		
-		if ($content === false) {
-		    
-			throw new IOException("Unable to read file '$file'. " . self::getLastError());
-		}
-		
-		return $content;
-	}
+    public function delete(string $path): void
+    {
+        // 1. Soubory a symlinky (včetně symlinků na adresáře)
+        if (is_link($path) || is_file($path)) {
 
-	/**
-	 * Zapsat do souboru
-	 * 
-	 * @param string $file
-	 * @param mixed $content
-	 * @param number $mode
-	 * @throws IOException
-	 */
-	public static function write(string $file, $content, $mode = 0666) {
-	    
-		static::createDir(dirname($file));
-		
-		if (@file_put_contents($file, $content) === false) { 
-		    
-		    throw new IOException("Unable to write file '$file'. " . self::getLastError());
-		}
-		
-		if ($mode !== null && !@chmod($file, $mode)) {
-		    
-			throw new IOException("Unable to chmod file '$file'. " . self::getLastError());
-		}
-	}
+            $result = false;
 
+            if (DIRECTORY_SEPARATOR === '\\' && is_dir($path)) {
+                // Windows: symlink na adresář
+                $result = @rmdir($path);
+            } else {
+                $result = @unlink($path);
+            }
 
-	/**
-	 * Absolutni cesta
-	 * 
-	 * @return bool
-	 */
-	public static function isAbsolute($path) {
-	    
-		return (bool) preg_match('#([a-z]:)?[/\\\\]|[a-z][a-z0-9+.-]*://#Ai', $path);
-	}
+            if (!$result) {
+                clearstatcache(true, $path);
 
+                if (file_exists($path)) {
+                    throw new IOException("Unable to delete '$path'. " . $this->getLastError());
+                }
+            }
 
-	/**
-	 * 
-	 * @return mixed
-	 */
-	private static function getLastError() {
-	    
-		return preg_replace('#^\w+\(.*?\): #', '', error_get_last()['message']);
-	}
+            return;
+        }
+
+        // 2. Skutečné adresáře
+        if (is_dir($path)) {
+            foreach ($this->iterateDirectory($path) as $item) {
+                $this->delete($item->getPathname());
+            }
+
+            if (!@rmdir($path)) {
+                clearstatcache(true, $path);
+
+                if (is_dir($path)) {
+                    throw new IOException("Unable to delete directory '$path'. " . $this->getLastError());
+                }
+            }
+        }
+    }
+
+    public function rename(string $name, string $newName, bool $overwrite = true): void
+    {
+        if (!$overwrite && file_exists($newName)) {
+            throw new InvalidStateException("File or directory '$newName' already exists.");
+        }
+
+        if (!file_exists($name)) {
+            throw new IOException("File or directory '$name' not found.");
+        }
+
+        $this->createDir(dirname($newName));
+
+        if (realpath($name) !== realpath($newName) && file_exists($newName)) {
+            $this->delete($newName);
+        }
+
+        if (!@rename($name, $newName)) {
+            throw new IOException("Unable to rename '$name' to '$newName'. " . $this->getLastError());
+        }
+    }
+
+    public function read(string $file): string
+    {
+        $handle = $this->open($file, 'rb');
+
+        if (!flock($handle, LOCK_SH)) {
+            fclose($handle);
+            throw new IOException("Unable to acquire shared lock for file '$file'.");
+        }
+
+        try {
+            $content = '';
+
+            while (!feof($handle)) {
+                $chunk = fread($handle, 8192);
+
+                if ($chunk === false) {
+                    throw new IOException("Unable to read file '$file'. " . $this->getLastError());
+                }
+
+                $content .= $chunk;
+            }
+
+            return $content;
+
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
+    }
+
+    public function write(string $file, string|\Stringable $content, ?int $mode = 0666): void
+    {
+        $dir = dirname($file);
+        $this->createDir($dir);
+
+        $tmpFile = $dir . '/.' . basename($file) . '.' . uniqid('', true) . '.tmp';
+
+        $handle = $this->open($tmpFile, 'wb');
+
+        $data = is_string($content) ? $content : (string) $content;
+        $length = strlen($data);
+        $written = 0;
+
+        while ($written < $length) {
+            $result = fwrite($handle, substr($data, $written, 8192));
+
+            if ($result === false) {
+                fclose($handle);
+                @unlink($tmpFile);
+                throw new IOException("Unable to write to file '$file'. " . $this->getLastError());
+            }
+
+            $written += $result;
+        }
+
+        fflush($handle);
+        fclose($handle);
+
+        if ($mode !== null && !@chmod($tmpFile, $mode)) {
+            @unlink($tmpFile);
+            throw new IOException("Unable to chmod file '$file'. " . $this->getLastError());
+        }
+
+        // retry rename (řeší locky / NFS / Windows)
+        $attempts = 3;
+
+        while ($attempts-- > 0) {
+            if (@rename($tmpFile, $file)) {
+
+                if ($mode !== null && !@chmod($file, $mode)) {
+                    throw new IOException("Unable to chmod file '$file'. " . $this->getLastError());
+                }
+
+                return;
+            }
+
+            usleep(50000);
+        }
+
+        @unlink($tmpFile);
+
+        throw new IOException("Unable to move temp file to '$file'. " . $this->getLastError());
+    }
+
+    public function isAbsolute(string $path): bool
+    {
+        return (bool) preg_match('#([a-z]:)?[/\\\\]|[a-z][a-z0-9+.-]*://#Ai', $path);
+    }
+
+    private function getLastError(): string
+    {
+        $error = error_get_last();
+
+        if ($error === null) {
+            return '';
+        }
+
+        $message = preg_replace('#^\w+\(.*?\): #', '', $error['message']);
+
+        if ($message === null) {
+            return '';
+        }
+
+        return $message;
+    }
+
+    /**
+     * @return resource
+     */
+    private function open(string $file, string $mode)
+    {
+        $handle = fopen($file, $mode);
+
+        if ($handle === false) {
+            throw new IOException("Unable to open file '$file'. " . $this->getLastError());
+        }
+
+        return $handle;
+    }
+
+    /**
+     * @return iterable<SplFileInfo>
+     */
+    private function iterateDirectory(string $path): iterable
+    {
+        foreach (new FilesystemIterator(
+                     $path,
+                     FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_FILEINFO
+                 ) as $item) {
+            /** @var SplFileInfo $item */
+            yield $item;
+        }
+    }
+
+    /**
+     * @return iterable<SplFileInfo>
+     */
+    private function iterateRecursive(string $path): iterable
+    {
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator(
+                $path,
+                RecursiveDirectoryIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_FILEINFO
+            ),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        /** @var SplFileInfo $item */
+        foreach ($iterator as $item) {
+            yield $item;
+        }
+    }
 }

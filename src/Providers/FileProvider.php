@@ -56,17 +56,15 @@ final class FileProvider
     private ?string $appMissingPng   = null;
     private ?string $appMissingWebp  = null;
 
-    private DirectoryProvider $appDir;
-    private DataProvider $appData;
-
     private int $localImageMTime = 0;
 
     /**
      * Vytvoří file provider kontext.
      */
     public function __construct(
-        DirectoryProvider $dir,
-        DataProvider $data,
+        private readonly DirectoryProvider $dir,
+        private readonly DataProvider $data,
+        private readonly FileSystem $filesystem,
         ?string $file = null
     ) {
         $this->appDir  = $dir;
@@ -145,7 +143,7 @@ final class FileProvider
     public function createDirectory(string $dir): void
     {
         try {
-            FileSystem::createDir(dirname($dir));
+            $this->filesystem->createDir(dirname($dir));
         } catch (IOException) {
             // silent by design
         }
@@ -157,7 +155,7 @@ final class FileProvider
     public function deleteCache(): void
     {
         try {
-            FileSystem::delete($this->appDir->getCache());
+            $this->filesystem->delete($this->appDir->getCache());
         } catch (IOException) {
             // silent by design
         }
