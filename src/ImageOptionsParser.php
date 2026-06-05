@@ -182,7 +182,7 @@ final class ImageOptionsParser
             'q' => $this->quality = ctype_digit($val) ? (int) $val : 72,
             'c' => $this->canvas = (ctype_xdigit($val) && mb_strlen($val) === 6) ? $val : 'ffffff',
             'e' => $this->missing = in_array((int) $val, [0, 1], true) ? $val === '1' : true,
-            'z' => $this->crop = in_array((int) $val, [0, 1, 2, 3], true) ? (int) $val : 0,
+            'z' => $this->crop = in_array((int) $val, [0, 1, 2, 3, 4, 5], true) ? (int) $val : 0,
             default => null, // neznámý nebo nepodporovaný token
         };
     }
