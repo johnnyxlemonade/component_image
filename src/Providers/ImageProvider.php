@@ -200,8 +200,8 @@ final class ImageProvider
         // thumbImage
         $thumb = self::loadErrorThumb();
         $thumb->resize(
-            (int) round($width * 0.75),
-            (int) round($height * 0.75),
+            (int) round($width * self::CANVAS_SCALE_NORMAL),
+            (int) round($height * self::CANVAS_SCALE_NORMAL),
             AppGenerator::FIT | AppGenerator::SHRINK_ONLY,
             true
         );
@@ -268,34 +268,40 @@ final class ImageProvider
     {
         return match ($opt->getCrop()) {
             -1 => clone $src,
-            1 => self::resizeFitWithCanvas($src, $opt),
+            1 => self::resizeFitWithCanvas($src, $opt, self::CANVAS_SCALE_NORMAL),
             2 => self::resizeExact($src, $opt),
             3 => self::resizeFit($src, $opt),
-            4 => self::resizeExactWithCanvas($src, $opt, self::CANVAS_SCALE_BIGGER),
-            5 => self::resizeExactWithCanvas($src, $opt, self::CANVAS_SCALE_MAX),
+            4 => self::resizeFitWithCanvas($src, $opt, self::CANVAS_SCALE_BIGGER),
+            5 => self::resizeFitWithCanvas($src, $opt, self::CANVAS_SCALE_MAX),
             default => self::resizeShrink($src, $opt),
         };
     }
 
     /**
-     * z1: Proportional fit into canvas with normal padding.
+     * Proportional fit into canvas.
      */
-    private static function resizeFitWithCanvas(AppGenerator $src, ImageOptionsDTO $opt): AppGenerator
-    {
+    private static function resizeFitWithCanvas(
+        AppGenerator $src,
+        ImageOptionsDTO $opt,
+        float $scale
+    ): AppGenerator {
         $w = $opt->getWidth();
         $h = $opt->getHeight();
 
+        $canvasWidth = $w ?? $h ?? $src->getWidth();
+        $canvasHeight = $h ?? $w ?? $src->getHeight();
+
         $thumb = clone $src;
         $thumb->resize(
-            ($w ? (int) round($w * self::CANVAS_SCALE_NORMAL) : null),
-            ($h ? (int) round($h * self::CANVAS_SCALE_NORMAL) : null),
+            (int) round($canvasWidth * $scale),
+            (int) round($canvasHeight * $scale),
             AppGenerator::FIT,
             true
         );
 
         $image = AppGenerator::fromBlank(
-            ($w ?? $h ?? $thumb->getWidth()),
-            ($h ?? $w ?? $thumb->getHeight()),
+            $canvasWidth,
+            $canvasHeight,
             ColorProvider::hexRgb($opt->getCanvasColor())->toArray()
         );
 
@@ -336,43 +342,6 @@ final class ImageProvider
             AppGenerator::FIT | AppGenerator::SHRINK_ONLY
         );
         return $img;
-    }
-
-    /**
-     * Exact resize into inner canvas box.
-     */
-    private static function resizeExactWithCanvas(
-        AppGenerator $src,
-        ImageOptionsDTO $opt,
-        float $scale
-    ): AppGenerator {
-        $w = $opt->getWidth();
-        $h = $opt->getHeight();
-
-        $canvasWidth = $w ?? $h ?? $src->getWidth();
-        $canvasHeight = $h ?? $w ?? $src->getHeight();
-
-        $innerWidth = (int) round($canvasWidth * $scale);
-        $innerHeight = (int) round($canvasHeight * $scale);
-
-        $thumb = clone $src;
-        $thumb->resize(
-            $innerWidth,
-            $innerHeight,
-            AppGenerator::EXACT,
-            true
-        );
-
-        $image = AppGenerator::fromBlank(
-            $canvasWidth,
-            $canvasHeight,
-            ColorProvider::hexRgb($opt->getCanvasColor())->toArray()
-        );
-
-        $image->saveAlpha(true);
-        $image->place($thumb, "50%", "50%");
-
-        return $image;
     }
 
     /**
