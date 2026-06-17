@@ -6,8 +6,12 @@ namespace Lemonade\Image\Providers;
 
 use DateTimeImmutable;
 use Lemonade\Image\AppGenerator;
+use Lemonade\Image\Exceptions\Image\ImageCacheException;
+use Lemonade\Image\Exceptions\Image\ImagePlaceholderException;
+use Lemonade\Image\Exceptions\Image\ImageRenderException;
+use Lemonade\Image\Exceptions\Image\ImageSourceException;
+use Lemonade\Image\Exceptions\Image\ImageTypeException;
 use Lemonade\Image\ImageOptionsDTO;
-use RuntimeException;
 
 use function file_exists;
 use function imagecolorallocatealpha;
@@ -143,6 +147,7 @@ final class ImageProvider
 
         if ($clientTime > ($serverTime - $lifetime)) {
             ServerHeaderProvider::setLastModified($clientTime, 304);
+
             return;
         }
 
@@ -180,7 +185,7 @@ final class ImageProvider
         // 1×1 bílý PNG generovaný v paměti
         $img = imagecreatetruecolor(1, 1);
         if ($img === false) {
-            throw new RuntimeException('Unable to create fallback error image.');
+            throw ImagePlaceholderException::createFailed();
         }
 
         // Povolit alfa kanál
@@ -190,7 +195,8 @@ final class ImageProvider
         $white = imagecolorallocatealpha($img, 255, 255, 255, 0);
         if ($white === false) {
             imagedestroy($img);
-            throw new RuntimeException('Unable to allocate fallback error image color.');
+
+            throw ImagePlaceholderException::colorAllocationFailed();
         }
 
         imagefill($img, 0, 0, $white);
@@ -201,7 +207,7 @@ final class ImageProvider
         imagedestroy($img);
 
         if ($png === false) {
-            throw new RuntimeException('Unable to render fallback error image.');
+            throw ImagePlaceholderException::renderFailed();
         }
 
         return AppGenerator::fromString($png);
@@ -279,7 +285,7 @@ final class ImageProvider
         $webp = $app->getMissingWebp();
 
         if ($png === null || $webp === null) {
-            throw new RuntimeException('Missing error cache file path.');
+            throw ImageCacheException::missingErrorCachePath();
         }
 
         $app->createDirectory($png);
@@ -300,7 +306,7 @@ final class ImageProvider
         $file = $app->getFileFs();
 
         if ($file === null) {
-            throw new RuntimeException('Missing source image file path.');
+            throw ImageSourceException::missingSourcePath();
         }
 
         return AppGenerator::fromFile($file);
@@ -422,13 +428,14 @@ final class ImageProvider
         $cacheWebp = $app->getCacheWebp();
 
         if ($cacheFile === null || $cacheWebp === null) {
-            throw new RuntimeException('Missing cache file path.');
+            throw ImageCacheException::missingCachePath();
         }
 
         $app->createDirectory($cacheFile);
 
         if (!WebpProvider::hasSupport()) {
             $image->save($cacheFile, $quality, $imgExt);
+
             return;
         }
 
@@ -451,7 +458,7 @@ final class ImageProvider
         $data = $image->toString($imgExt, $quality);
 
         if ($data === '') {
-            throw new RuntimeException('Image rendering failed');
+            throw ImageRenderException::failed();
         }
 
         self::sendHeader($imgExt, strlen($data));
@@ -466,13 +473,13 @@ final class ImageProvider
         $file = $app->getFileFs();
 
         if ($file === null) {
-            throw new RuntimeException('Missing source image file path.');
+            throw ImageSourceException::missingSourcePath();
         }
 
         $type = AppGenerator::detectTypeFromFile($file);
 
         if ($type === null) {
-            throw new RuntimeException('Unable to detect source image type.');
+            throw ImageTypeException::detectionFailed();
         }
 
         return $type;
