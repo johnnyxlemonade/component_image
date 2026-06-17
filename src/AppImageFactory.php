@@ -38,6 +38,7 @@ final class AppImageFactory
             ),
             cacheStorage: new ImageCacheStorage(),
             responseEmitter: $responseEmitter,
+            generator: new ImageGenerator(),
         );
     }
 

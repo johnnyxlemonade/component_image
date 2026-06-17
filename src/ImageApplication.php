@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Lemonade\Image;
 
-use Lemonade\Image\Providers\ImageProvider;
 use Throwable;
 
 /**
@@ -17,6 +16,7 @@ final class ImageApplication
         private readonly ImageCacheResponder $cacheResponder,
         private readonly ImageCacheStorage $cacheStorage,
         private readonly ImageResponseEmitter $responseEmitter,
+        private readonly ImageGenerator $generator,
     ) {}
 
     public function run(): void
@@ -33,13 +33,13 @@ final class ImageApplication
             }
 
             if ($provider->isFileExists($provider->getFileFs())) {
-                $result = ImageProvider::imageCreate($provider);
+                $result = $this->generator->createVariant($provider);
                 $this->responseEmitter->sendResult($result);
             }
 
             $this->cacheStorage->deleteCache($this->context);
 
-            $result = ImageProvider::imageError($provider);
+            $result = $this->generator->createFallback($provider);
             $this->responseEmitter->sendResult($result);
         } catch (Throwable) {
             $this->sendFallbackImage();
@@ -56,7 +56,7 @@ final class ImageApplication
             $data->setHeight(600);
         }
 
-        $result = ImageProvider::imageError($provider);
+        $result = $this->generator->createFallback($provider);
         $this->responseEmitter->sendResult($result);
     }
 }
