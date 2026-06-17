@@ -26,7 +26,7 @@ final class DirectoryCreateException extends IOException
         return new self(sprintf(
             'Unable to create directory "%s".%s',
             $path,
-            $reason !== '' ? ' ' . $reason : ''
+            $reason !== '' ? ' ' . $reason : '',
         ));
     }
 }

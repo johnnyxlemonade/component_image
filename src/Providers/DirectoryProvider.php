@@ -32,10 +32,10 @@ final class DirectoryProvider
      * Mapování typů uložišť na interní ID.
      */
     private const MODULE_MAP = [
-        'template'  => 'template',
+        'template' => 'template',
         'thumbnail' => 1,
-        'gallery'   => 2,
-        'editor'    => 5,
+        'gallery' => 2,
+        'editor' => 5,
     ];
 
     /**
@@ -62,7 +62,7 @@ final class DirectoryProvider
         int $level,
         string|int|null $storageTypeId = null,
         string|int|null $moduleId = null,
-        string|int|null $artId = null
+        string|int|null $artId = null,
     ) {
         $this->pathFormat = self::pathFormat();
 
@@ -100,7 +100,7 @@ final class DirectoryProvider
     protected function setDirectories(
         string|int|null $storageTypeId = null,
         string|int|null $moduleId = null,
-        string|int|null $artId = null
+        string|int|null $artId = null,
     ): void {
         $directoryId = $this->resolveDirectoryId($storageTypeId);
         $structure = $this->buildDirectoryStructure($artId);
@@ -110,7 +110,7 @@ final class DirectoryProvider
             'storage',
             (string) ($moduleId ?? '0'),
             $directoryId,
-            $structure
+            $structure,
         );
 
         $this->cacheDirectory = sprintf(
@@ -118,7 +118,7 @@ final class DirectoryProvider
             'storage' . DIRECTORY_SEPARATOR . '0' . DIRECTORY_SEPARATOR . 'cache',
             (string) ($moduleId ?? '0'),
             $directoryId,
-            $structure
+            $structure,
         );
     }
 
@@ -141,12 +141,12 @@ final class DirectoryProvider
                     dechex((int) $artId),
                     $this->getLevel(),
                     '0',
-                    STR_PAD_LEFT
+                    STR_PAD_LEFT,
                 ),
                 2,
-                DIRECTORY_SEPARATOR
+                DIRECTORY_SEPARATOR,
             ),
-            DIRECTORY_SEPARATOR
+            DIRECTORY_SEPARATOR,
         );
     }
 

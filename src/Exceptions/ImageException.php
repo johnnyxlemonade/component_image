@@ -15,6 +15,4 @@ namespace Lemonade\Image\Exceptions;
  * @license     MIT
  * @since       1.0.0
  */
-interface ImageException
-{
-}
+interface ImageException {}

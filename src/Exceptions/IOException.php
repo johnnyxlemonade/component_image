@@ -17,6 +17,4 @@ use RuntimeException;
  * @license     MIT
  * @since       1.0.0
  */
-class IOException extends RuntimeException implements ImageException
-{
-}
+class IOException extends RuntimeException implements ImageException {}

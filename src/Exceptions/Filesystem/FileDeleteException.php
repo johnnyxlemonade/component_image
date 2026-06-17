@@ -26,7 +26,7 @@ final class FileDeleteException extends IOException
         return new self(sprintf(
             'Unable to delete "%s".%s',
             $path,
-            $reason !== '' ? ' ' . $reason : ''
+            $reason !== '' ? ' ' . $reason : '',
         ));
     }
 }

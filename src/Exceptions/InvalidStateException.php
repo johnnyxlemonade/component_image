@@ -17,6 +17,4 @@ use RuntimeException;
  * @license     MIT
  * @since       1.0.0
  */
-class InvalidStateException extends RuntimeException implements ImageException
-{
-}
+class InvalidStateException extends RuntimeException implements ImageException {}

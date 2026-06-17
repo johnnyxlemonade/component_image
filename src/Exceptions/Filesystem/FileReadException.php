@@ -26,7 +26,7 @@ final class FileReadException extends IOException
         return new self(sprintf(
             'Unable to read file "%s".%s',
             $path,
-            $reason !== '' ? ' ' . $reason : ''
+            $reason !== '' ? ' ' . $reason : '',
         ));
     }
 }

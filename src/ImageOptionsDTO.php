@@ -7,8 +7,6 @@ namespace Lemonade\Image;
 use function json_encode;
 use function md5;
 
-use const JSON_THROW_ON_ERROR;
-
 /**
  * Carries normalized image transformation options.
  *
@@ -58,7 +56,7 @@ final class ImageOptionsDTO
             $this->crop,
             $this->canvasColor,
             $this->quality,
-            $this->missing
+            $this->missing,
         );
     }
 
@@ -70,7 +68,7 @@ final class ImageOptionsDTO
             $this->crop,
             $this->canvasColor,
             $this->quality,
-            $this->missing
+            $this->missing,
         );
     }
 
@@ -189,7 +187,7 @@ final class ImageOptionsDTO
             $this->canvasColor,
             $this->missing ? '1' : '0',
             $this->crop,
-            $this->quality
+            $this->quality,
         );
     }
 }

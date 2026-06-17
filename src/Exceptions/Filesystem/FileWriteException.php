@@ -26,7 +26,7 @@ final class FileWriteException extends IOException
         return new self(sprintf(
             'Unable to write file "%s".%s',
             $path,
-            $reason !== '' ? ' ' . $reason : ''
+            $reason !== '' ? ' ' . $reason : '',
         ));
     }
 }

@@ -174,7 +174,7 @@ final class AppGenerator
                 $color['red'],
                 $color['green'],
                 $color['blue'],
-                $color['alpha']
+                $color['alpha'],
             );
 
             GdImageOperations::alphaBlending($image, false);
@@ -266,7 +266,7 @@ final class AppGenerator
             default => throw new LogicException(sprintf(
                 'Undefined property %s::$%s.',
                 self::class,
-                $name
+                $name,
             )),
         };
     }
@@ -277,14 +277,12 @@ final class AppGenerator
     }
 
     /**
-     * @param int|string|null $width
-     * @param int|string|null $height
      */
     public function resize(
         int|string|null $width = null,
         int|string|null $height = null,
         int $mode = self::FIT,
-        bool $shrinkOnly = false
+        bool $shrinkOnly = false,
     ): self {
         if ($mode === self::EXACT) {
             return $this
@@ -298,14 +296,14 @@ final class AppGenerator
             $width,
             $height,
             $mode,
-            $shrinkOnly
+            $shrinkOnly,
         );
 
         if ($newWidth !== $this->getWidth() || $newHeight !== $this->getHeight()) {
             $newImage = self::fromBlank(
                 $newWidth,
                 $newHeight,
-                self::rgb(0, 0, 0, 127)
+                self::rgb(0, 0, 0, 127),
             )->getImageResource();
 
             GdImageOperations::copyResampled(
@@ -318,7 +316,7 @@ final class AppGenerator
                 $newWidth,
                 $newHeight,
                 $this->getWidth(),
-                $this->getHeight()
+                $this->getHeight(),
             );
 
             $this->image = $newImage;
@@ -334,8 +332,6 @@ final class AppGenerator
     }
 
     /**
-     * @param int|string|null $newWidth
-     * @param int|string|null $newHeight
      *
      * @return array{0: int, 1: int}
      */
@@ -345,7 +341,7 @@ final class AppGenerator
         int|string|null $newWidth,
         int|string|null $newHeight,
         int $mode = self::FIT,
-        bool $shrinkOnly = false
+        bool $shrinkOnly = false,
     ): array {
         $shrinkOnly = $shrinkOnly || (($mode & self::SHRINK_ONLY) !== 0);
 
@@ -404,16 +400,12 @@ final class AppGenerator
     }
 
     /**
-     * @param int|string $left
-     * @param int|string $top
-     * @param int|string|null $width
-     * @param int|string|null $height
      */
     public function crop(
         int|string $left,
         int|string $top,
         int|string|null $width,
-        int|string|null $height
+        int|string|null $height,
     ): self {
         [$x, $y, $cutWidth, $cutHeight] = self::calculateCutout(
             $this->getWidth(),
@@ -421,7 +413,7 @@ final class AppGenerator
             $left,
             $top,
             $width,
-            $height
+            $height,
         );
 
         $gdInfo = gd_info();
@@ -454,7 +446,7 @@ final class AppGenerator
             $x,
             $y,
             $cutWidth,
-            $cutHeight
+            $cutHeight,
         );
 
         $this->image = $newImage;
@@ -463,8 +455,6 @@ final class AppGenerator
     }
 
     /**
-     * @param int|string|null $newWidth
-     * @param int|string|null $newHeight
      *
      * @return array{0: int, 1: int, 2: int, 3: int}
      */
@@ -474,7 +464,7 @@ final class AppGenerator
         int|string $left,
         int|string $top,
         int|string|null $newWidth,
-        int|string|null $newHeight
+        int|string|null $newHeight,
     ): array {
         $cutWidth = self::resolveLength($newWidth, $srcWidth);
         $cutHeight = self::resolveLength($newHeight, $srcHeight);
@@ -515,8 +505,6 @@ final class AppGenerator
     }
 
     /**
-     * @param int|string $left
-     * @param int|string $top
      */
     public function place(self $image, int|string $left = 0, int|string $top = 0, int $opacity = 100): self
     {
@@ -695,8 +683,8 @@ final class AppGenerator
                         sprintf(
                             'Image cache write failed (%s): %s',
                             $targetFile,
-                            $lastError !== '' ? $lastError : 'unknown GD error'
-                        )
+                            $lastError !== '' ? $lastError : 'unknown GD error',
+                        ),
                     );
                 }
 
@@ -706,7 +694,7 @@ final class AppGenerator
             $lastError = self::getLastError();
 
             throw GdImageOutputException::output(
-                $lastError !== '' ? $lastError : 'Image output failed.'
+                $lastError !== '' ? $lastError : 'Image output failed.',
             );
         }
 
@@ -726,7 +714,7 @@ final class AppGenerator
                     if (function_exists('log_message')) {
                         log_message(
                             'error',
-                            sprintf('Failed to move image cache file: %s', $targetFile)
+                            sprintf('Failed to move image cache file: %s', $targetFile),
                         );
                     }
                 }
@@ -760,7 +748,7 @@ final class AppGenerator
                     $value['red'],
                     $value['green'],
                     $value['blue'],
-                    $value['alpha'] ?? 0
+                    $value['alpha'] ?? 0,
                 );
             }
         }
@@ -896,7 +884,7 @@ final class AppGenerator
         if (!is_numeric($dimension)) {
             throw new InvalidArgumentException(sprintf(
                 'Expected numeric dimension, "%s" given.',
-                $dimension
+                $dimension,
             ));
         }
 
@@ -908,7 +896,7 @@ final class AppGenerator
         if (!is_numeric($value)) {
             throw new InvalidArgumentException(sprintf(
                 'Expected numeric percentage, "%s" given.',
-                $value
+                $value,
             ));
         }
 

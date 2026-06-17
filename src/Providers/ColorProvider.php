@@ -33,9 +33,9 @@ final class ColorProvider implements ToArrayInterface
     public function toArray(): array
     {
         return [
-            'red'   => self::clamp($this->red),
+            'red' => self::clamp($this->red),
             'green' => self::clamp($this->green),
-            'blue'  => self::clamp($this->blue),
+            'blue' => self::clamp($this->blue),
         ];
     }
 

@@ -60,8 +60,8 @@ final class ImageProvider
      */
     public const MIME_TYPES = [
         AppGenerator::JPEG => 'image/jpg',
-        AppGenerator::PNG  => 'image/png',
-        AppGenerator::GIF  => 'image/gif',
+        AppGenerator::PNG => 'image/png',
+        AppGenerator::GIF => 'image/gif',
         AppGenerator::WEBP => 'image/webp',
     ];
 
@@ -228,7 +228,7 @@ final class ImageProvider
             (int) round($width * self::CANVAS_SCALE_NORMAL),
             (int) round($height * self::CANVAS_SCALE_NORMAL),
             AppGenerator::FIT | AppGenerator::SHRINK_ONLY,
-            true
+            true,
         );
 
         // mainImage
@@ -237,7 +237,7 @@ final class ImageProvider
         $image = AppGenerator::fromBlank(
             $width,
             $height,
-            $rgb
+            $rgb,
         );
 
         // Transparentní vrstva + alfa kanál
@@ -246,7 +246,7 @@ final class ImageProvider
             $rgb['red'],
             $rgb['green'],
             $rgb['blue'],
-            0
+            0,
         );
         $image->fill(0, 0, $alpha);
         $image->saveAlpha(true);
@@ -262,7 +262,7 @@ final class ImageProvider
         FileProvider $app,
         AppGenerator $image,
         int $quality,
-        int $ext
+        int $ext,
     ): void {
         $png = $app->getMissingPng();
         $webp = $app->getMissingWebp();
@@ -317,7 +317,7 @@ final class ImageProvider
     private static function resizeFitWithCanvas(
         AppGenerator $src,
         ImageOptionsDTO $opt,
-        float $scale
+        float $scale,
     ): AppGenerator {
         $w = $opt->getWidth();
         $h = $opt->getHeight();
@@ -330,13 +330,13 @@ final class ImageProvider
             (int) round($canvasWidth * $scale),
             (int) round($canvasHeight * $scale),
             AppGenerator::FIT,
-            true
+            true,
         );
 
         $image = AppGenerator::fromBlank(
             $canvasWidth,
             $canvasHeight,
-            ColorProvider::hexRgb($opt->getCanvasColor())->toArray()
+            ColorProvider::hexRgb($opt->getCanvasColor())->toArray(),
         );
 
         $image->saveAlpha(true);
@@ -358,7 +358,7 @@ final class ImageProvider
             $w ?? $h ?? $img->getWidth(),
             $h ?? $w ?? $img->getHeight(),
             AppGenerator::EXACT,
-            true
+            true,
         );
 
         return $img;
@@ -373,7 +373,7 @@ final class ImageProvider
         $img->resize(
             $opt->getWidth(),
             $opt->getHeight(),
-            AppGenerator::FIT | AppGenerator::SHRINK_ONLY
+            AppGenerator::FIT | AppGenerator::SHRINK_ONLY,
         );
 
         return $img;
@@ -392,7 +392,7 @@ final class ImageProvider
             $w ?? $h ?? $img->getWidth(),
             $h ?? $w ?? $img->getHeight(),
             AppGenerator::SHRINK_ONLY,
-            true
+            true,
         );
 
         return $img;
@@ -405,7 +405,7 @@ final class ImageProvider
         FileProvider $app,
         AppGenerator $image,
         int $quality,
-        int $imgExt
+        int $imgExt,
     ): void {
         $cacheFile = $app->getCacheFile();
         $cacheWebp = $app->getCacheWebp();
@@ -436,7 +436,7 @@ final class ImageProvider
     private static function outputImage(
         AppGenerator $image,
         int $imgExt,
-        int $quality
+        int $quality,
     ): never {
         $data = $image->toString($imgExt, $quality);
 

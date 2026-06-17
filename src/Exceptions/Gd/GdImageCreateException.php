@@ -25,7 +25,7 @@ final class GdImageCreateException extends GdException
             'Unable to create true color image %dx%d.%s',
             $width,
             $height,
-            $reason !== '' ? ' ' . $reason : ''
+            $reason !== '' ? ' ' . $reason : '',
         ));
     }
 

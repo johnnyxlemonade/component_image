@@ -28,10 +28,10 @@ use Lemonade\Image\Utils\FileSystem;
  */
 final class FileProvider
 {
-    private ?string $appFileFs      = null;
-    private ?string $appCacheFile   = null;
-    private ?string $appCacheWebp   = null;
-    private ?string $appMissingPng  = null;
+    private ?string $appFileFs = null;
+    private ?string $appCacheFile = null;
+    private ?string $appCacheWebp = null;
+    private ?string $appMissingPng = null;
     private ?string $appMissingWebp = null;
 
     /**
@@ -41,7 +41,7 @@ final class FileProvider
         private readonly DirectoryProvider $directory,
         private readonly DataProvider $data,
         private readonly FileSystem $filesystem,
-        ?string $file = null
+        ?string $file = null,
     ) {
         $this->setFile($file ?? 'missing.png');
     }
@@ -144,7 +144,7 @@ final class FileProvider
         }
 
         $sTime = (int) strtotime(
-            ServerProvider::get('HTTP_IF_MODIFIED_SINCE')
+            ServerProvider::get('HTTP_IF_MODIFIED_SINCE'),
         );
 
         if ($sTime < 1 || !$this->isFileExists($this->appFileFs)) {
@@ -214,13 +214,13 @@ final class FileProvider
             '%s/%s.%s',
             $this->directory->getStorage(),
             $filename,
-            $extension
+            $extension,
         );
 
         $cacheHash = substr(
             sha1($this->appFileFs . '|' . $this->data->getHash()),
             0,
-            32
+            32,
         );
 
         $this->appCacheFile = sprintf(
@@ -228,25 +228,25 @@ final class FileProvider
             $this->directory->getCache(),
             $filename,
             $cacheHash,
-            $extension
+            $extension,
         );
 
         $this->appCacheWebp = sprintf(
             '%s/%s-%s.webp',
             $this->directory->getCache(),
             $filename,
-            $cacheHash
+            $cacheHash,
         );
 
         // error / missing – pouze podle varianty
         $this->appMissingPng = sprintf(
             './storage/0/cache/0/%s.png',
-            $this->data->getHash()
+            $this->data->getHash(),
         );
 
         $this->appMissingWebp = sprintf(
             './storage/0/cache/0/%s.webp',
-            $this->data->getHash()
+            $this->data->getHash(),
         );
     }
 

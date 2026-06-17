@@ -27,7 +27,7 @@ final class FilePermissionException extends IOException
             'Unable to change permissions for "%s" during "%s".%s',
             $path,
             $operation,
-            $reason !== '' ? ' ' . $reason : ''
+            $reason !== '' ? ' ' . $reason : '',
         ));
     }
 }

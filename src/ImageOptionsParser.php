@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Lemonade\Image;
 
-use function explode;
-use function mb_substr;
-use function mb_strlen;
-use function in_array;
 use function ctype_digit;
 use function ctype_xdigit;
+use function explode;
+use function in_array;
 use function json_encode;
+use function mb_strlen;
+use function mb_substr;
+use function md5;
 use function preg_match;
 use function sprintf;
-use function md5;
 
 /**
  * Parses compact image option strings into normalized transformation settings.
@@ -39,11 +39,11 @@ final class ImageOptionsParser
      */
     private const SIZE_PRESETS = [
         'xss' => [32, 32],
-        'xs'  => [48, 48],
-        'sm'  => [96, 96],
-        'md'  => [160, 160],
-        'lg'  => [320, 320],
-        'xl'  => [640, 640],
+        'xs' => [48, 48],
+        'sm' => [96, 96],
+        'md' => [160, 160],
+        'lg' => [320, 320],
+        'xl' => [640, 640],
     ];
     private const MAX_PRESET_SCALE = 3; // ochrana proti extrémním @N (DoS)
 
@@ -66,9 +66,9 @@ final class ImageOptionsParser
         int $maxWidth = 2560,
         int $maxHeight = 2560,
     ) {
-        $this->minWidth  = $minWidth;
+        $this->minWidth = $minWidth;
         $this->minHeight = $minHeight;
-        $this->maxWidth  = $maxWidth;
+        $this->maxWidth = $maxWidth;
         $this->maxHeight = $maxHeight;
 
         $this->parse($args);
@@ -149,8 +149,8 @@ final class ImageOptionsParser
             return false;
         }
 
-        $this->crop   = -1;
-        $this->width  = null;
+        $this->crop = -1;
+        $this->width = null;
         $this->height = null;
 
         return true;
@@ -167,8 +167,8 @@ final class ImageOptionsParser
         $val = mb_substr($item, 1);
 
         match ($key) {
-            'w' => $this->width = (ctype_digit($val) && (int)$val > 0) ? (int)$val : null,
-            'h' => $this->height = (ctype_digit($val) && (int)$val > 0) ? (int)$val : null,
+            'w' => $this->width = (ctype_digit($val) && (int) $val > 0) ? (int) $val : null,
+            'h' => $this->height = (ctype_digit($val) && (int) $val > 0) ? (int) $val : null,
             'q' => $this->quality = ctype_digit($val) ? (int) $val : 72,
             'c' => $this->canvas = (ctype_xdigit($val) && mb_strlen($val) === 6) ? $val : 'ffffff',
             'e' => $this->missing = in_array((int) $val, [0, 1], true) ? $val === '1' : true,
@@ -190,7 +190,7 @@ final class ImageOptionsParser
 
         // Pokud není zadáno nic → fallback min width/height
         if ($this->width === null && $this->height === null) {
-            $this->width  = $this->minWidth;
+            $this->width = $this->minWidth;
             $this->height = $this->minHeight;
             return;
         }
@@ -299,7 +299,7 @@ final class ImageOptionsParser
             $this->canvas,
             $this->missing ? '1' : '0',
             $this->crop,
-            $this->quality
+            $this->quality,
         );
     }
 }

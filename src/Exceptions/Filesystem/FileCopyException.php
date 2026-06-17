@@ -27,7 +27,7 @@ final class FileCopyException extends IOException
             'Unable to copy "%s" to "%s".%s',
             $source,
             $destination,
-            $reason !== '' ? ' ' . $reason : ''
+            $reason !== '' ? ' ' . $reason : '',
         ));
     }
 }

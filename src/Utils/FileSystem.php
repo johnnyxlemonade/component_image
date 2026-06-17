@@ -284,9 +284,9 @@ final class FileSystem
     private function iterateDirectory(string $path): iterable
     {
         foreach (new FilesystemIterator(
-                     $path,
-                     FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_FILEINFO
-                 ) as $item) {
+            $path,
+            FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_FILEINFO,
+        ) as $item) {
             /** @var SplFileInfo $item */
             yield $item;
         }
@@ -300,9 +300,9 @@ final class FileSystem
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator(
                 $path,
-                RecursiveDirectoryIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_FILEINFO
+                RecursiveDirectoryIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_FILEINFO,
             ),
-            RecursiveIteratorIterator::SELF_FIRST
+            RecursiveIteratorIterator::SELF_FIRST,
         );
 
         foreach ($iterator as $item) {

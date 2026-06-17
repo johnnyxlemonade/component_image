@@ -24,7 +24,7 @@ final class GdImageLoadException extends GdException
         return new self(sprintf(
             'Unable to create image from file "%s".%s',
             $file,
-            $reason !== '' ? ' ' . $reason : ''
+            $reason !== '' ? ' ' . $reason : '',
         ));
     }
 }

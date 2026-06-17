@@ -22,11 +22,11 @@ final class ServerHeaderProvider
      */
     public static function setCacheHeaders(int $lifetime, string $expires): void
     {
-        header("Accept-Ranges: none");
-        header("X-Component: Lemonade Image");
+        header('Accept-Ranges: none');
+        header('X-Component: Lemonade Image');
         header("Cache-Control: max-age={$lifetime}, no-transform");
         header("Expires: {$expires}");
-        header("Connection: close");
+        header('Connection: close');
     }
 
     /**
@@ -57,8 +57,8 @@ final class ServerHeaderProvider
     {
         $protocol = ServerProvider::get('SERVER_PROTOCOL', 'HTTP/1.1');
 
-        header("Connection: close");
-        header("X-Component: Lemonade Image");
+        header('Connection: close');
+        header('X-Component: Lemonade Image');
         header("{$protocol} 304 Not Modified");
     }
 
@@ -68,9 +68,9 @@ final class ServerHeaderProvider
     public static function setLastModified(int $timestamp, int $code): void
     {
         header(
-            "Last-Modified: " . gmdate("D, d M Y H:i:s", $timestamp) . " GMT",
+            'Last-Modified: ' . gmdate('D, d M Y H:i:s', $timestamp) . ' GMT',
             true,
-            $code
+            $code,
         );
     }
 }

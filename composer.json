@@ -30,6 +30,7 @@
     "ext-mbstring": "*"
   },
   "require-dev": {
+    "friendsofphp/php-cs-fixer": "^3.95",
     "phpstan/phpstan": "^2.1",
     "phpstan/phpstan-strict-rules": "^2.0"
   },
@@ -73,12 +74,19 @@
     "stan:ci": [
       "@php vendor/bin/phpstan analyse -c phpstan.neon.dist --no-progress --error-format=github --memory-limit=1G"
     ],
+    "cs:check": [
+      "@php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --dry-run --diff --allow-risky=yes"
+    ],
+    "cs:fix": [
+      "@php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --allow-risky=yes"
+    ],
     "check:platform": [
       "@composer check-platform-reqs"
     ],
     "check": [
       "@composer:validate",
       "@check:platform",
+      "@cs:check",
       "@stan"
     ]
   },
@@ -89,8 +97,10 @@
     "composer:validate": "Validate composer.json in strict mode.",
     "stan": "Run PHPStan static analysis.",
     "stan:ci": "Run PHPStan static analysis with GitHub Actions output format.",
+    "cs:check": "Check coding standards using PHP-CS-Fixer.",
+    "cs:fix": "Fix coding standards using PHP-CS-Fixer.",
     "check:platform": "Check installed platform requirements.",
-    "check": "Run Composer validation, platform checks and static analysis."
+    "check": "Run Composer validation, platform checks, coding standards and static analysis."
   },
   "support": {
     "email": "honzamudrak@gmail.com",

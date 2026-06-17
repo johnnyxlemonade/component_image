@@ -18,6 +18,4 @@ use RuntimeException;
  * @license     MIT
  * @since       1.0.0
  */
-class GdException extends RuntimeException implements ImageException
-{
-}
+class GdException extends RuntimeException implements ImageException {}

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Lemonade\Image;
 
+use Lemonade\Image\Providers\DataProvider;
 use Lemonade\Image\Providers\DirectoryProvider;
 use Lemonade\Image\Providers\FileProvider;
-use Lemonade\Image\Providers\DataProvider;
 use Lemonade\Image\Providers\ImageProvider;
 use Lemonade\Image\Utils\FileSystem;
 use Throwable;
@@ -46,7 +46,7 @@ final class AppImage
         string|int|null    $moduleId,
         string|int|null    $artId,
         ?string            $baseName,
-        ?string            $args
+        ?string            $args,
     ): void {
         $app = new self(
             level: $level,
@@ -54,7 +54,7 @@ final class AppImage
             moduleId: $moduleId,
             artId: $artId,
             baseName: $baseName,
-            args: $args
+            args: $args,
         );
 
         $app->run();
@@ -69,7 +69,7 @@ final class AppImage
         private readonly string|int|null $moduleId,
         private readonly string|int|null $artId,
         private readonly ?string $baseName,
-        private readonly ?string $args
+        private readonly ?string $args,
     ) {}
 
     /**
@@ -125,7 +125,7 @@ final class AppImage
             level: $this->level,
             storageTypeId: $this->storageTypId,
             moduleId: $this->moduleId,
-            artId: $this->artId
+            artId: $this->artId,
         );
     }
 
@@ -145,7 +145,7 @@ final class AppImage
             directory: $this->getDirectory(),
             data: $this->getData(),
             filesystem: $this->getFilesystem(),
-            file: $this->baseName
+            file: $this->baseName,
         );
     }
 

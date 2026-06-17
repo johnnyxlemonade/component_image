@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lemonade\Image\Providers;
 
-use Lemonade\Image\ImageOptionsParser;
 use Lemonade\Image\ImageOptionsDTO;
+use Lemonade\Image\ImageOptionsParser;
 
 /**
  * Holds parsed image options and exposes them as a DTO.

@@ -18,6 +18,4 @@ use RuntimeException;
  * @license     MIT
  * @since       1.0.0
  */
-class ImageProcessingException extends RuntimeException implements ImageException
-{
-}
+class ImageProcessingException extends RuntimeException implements ImageException {}

@@ -60,7 +60,7 @@ final class GdImageOperations
             throw GdImageCreateException::forTrueColorImage(
                 $width,
                 $height,
-                self::getLastError()
+                self::getLastError(),
             );
         }
 
@@ -78,14 +78,14 @@ final class GdImageOperations
         int $red,
         int $green,
         int $blue,
-        int $alpha = 0
+        int $alpha = 0,
     ): int {
         return imagecolorresolvealpha(
             $image,
             self::color($red),
             self::color($green),
             self::color($blue),
-            self::alpha($alpha)
+            self::alpha($alpha),
         );
     }
 
@@ -100,14 +100,14 @@ final class GdImageOperations
         int $red,
         int $green,
         int $blue,
-        int $alpha = 0
+        int $alpha = 0,
     ): int {
         $color = imagecolorallocatealpha(
             $image,
             self::color($red),
             self::color($green),
             self::color($blue),
-            self::alpha($alpha)
+            self::alpha($alpha),
         );
 
         if ($color === false) {
@@ -130,7 +130,7 @@ final class GdImageOperations
         int $y1,
         int $x2,
         int $y2,
-        int $color
+        int $color,
     ): void {
         if (!imagefilledrectangle($image, $x1, $y1, $x2, $y2, $color)) {
             throw GdImageColorException::filledRectangle(self::getLastError());
@@ -145,7 +145,7 @@ final class GdImageOperations
         int $srcX,
         int $srcY,
         int $srcWidth,
-        int $srcHeight
+        int $srcHeight,
     ): void {
         if (!imagecopy($destination, $source, $dstX, $dstY, $srcX, $srcY, $srcWidth, $srcHeight)) {
             throw GdImageCopyException::copy(self::getLastError());
@@ -162,7 +162,7 @@ final class GdImageOperations
         int $dstWidth,
         int $dstHeight,
         int $srcWidth,
-        int $srcHeight
+        int $srcHeight,
     ): void {
         if (!imagecopyresampled(
             $destination,
@@ -174,7 +174,7 @@ final class GdImageOperations
             self::positiveInt($dstWidth),
             self::positiveInt($dstHeight),
             self::positiveInt($srcWidth),
-            self::positiveInt($srcHeight)
+            self::positiveInt($srcHeight),
         )) {
             throw GdImageCopyException::resample(self::getLastError());
         }

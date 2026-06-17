@@ -15,6 +15,4 @@ namespace Lemonade\Image\Exceptions;
  * @license     MIT
  * @since       1.0.0
  */
-class InvalidArgumentException extends \InvalidArgumentException implements ImageException
-{
-}
+class InvalidArgumentException extends \InvalidArgumentException implements ImageException {}

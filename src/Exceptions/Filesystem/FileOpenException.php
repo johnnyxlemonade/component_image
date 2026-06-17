@@ -27,7 +27,7 @@ final class FileOpenException extends IOException
             'Unable to open file "%s" using mode "%s".%s',
             $path,
             $mode,
-            $reason !== '' ? ' ' . $reason : ''
+            $reason !== '' ? ' ' . $reason : '',
         ));
     }
 }

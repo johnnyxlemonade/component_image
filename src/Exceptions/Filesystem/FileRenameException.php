@@ -27,7 +27,7 @@ final class FileRenameException extends IOException
             'Unable to rename "%s" to "%s".%s',
             $source,
             $destination,
-            $reason !== '' ? ' ' . $reason : ''
+            $reason !== '' ? ' ' . $reason : '',
         ));
     }
 }
