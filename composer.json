@@ -31,12 +31,18 @@
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^3.95",
-    "phpstan/phpstan": "^2.1",
-    "phpstan/phpstan-strict-rules": "^2.0"
+    "phpstan/phpstan": "^2.2",
+    "phpstan/phpstan-strict-rules": "^2.0",
+    "phpunit/phpunit": "^10.5 || ^11.0"
   },
   "autoload": {
     "psr-4": {
       "Lemonade\\Image\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Lemonade\\Image\\Tests\\": "tests/"
     }
   },
   "config": {
@@ -86,6 +92,12 @@
     "cs:fix": [
       "@php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --allow-risky=yes"
     ],
+    "test": [
+      "@php vendor/bin/phpunit -c phpunit.xml.dist"
+    ],
+    "test:ci": [
+      "@php vendor/bin/phpunit -c phpunit.xml.dist --colors=never"
+    ],
     "check:platform": [
       "@composer check-platform-reqs"
     ],
@@ -94,11 +106,13 @@
       "@check:platform",
       "@lint",
       "@cs:check",
-      "@stan"
+      "@stan",
+      "@test"
     ]
   },
   "scripts-descriptions": {
     "lint": "Run PHP syntax lint over source files.",
+    "smoke": "Run smoke checks for basic component wiring.",
     "autoload:dev": "Regenerate Composer autoload files for development.",
     "autoload:optimize": "Regenerate optimized Composer autoload files.",
     "autoload:prod": "Regenerate optimized authoritative classmap for production.",
@@ -107,8 +121,10 @@
     "stan:ci": "Run PHPStan static analysis with GitHub Actions output format.",
     "cs:check": "Check coding standards using PHP-CS-Fixer.",
     "cs:fix": "Fix coding standards using PHP-CS-Fixer.",
+    "test": "Run PHPUnit tests.",
+    "test:ci": "Run PHPUnit tests without colors for CI output.",
     "check:platform": "Check installed platform requirements.",
-    "check": "Run Composer validation, platform checks, syntax lint, coding standards and static analysis."
+    "check": "Run Composer validation, platform checks, syntax lint, coding standards, static analysis and PHPUnit tests."
   },
   "support": {
     "email": "honzamudrak@gmail.com",

@@ -6,11 +6,11 @@ namespace Lemonade\Image\Utils;
 
 use Closure;
 use GdImage;
-use Lemonade\Image\AppGenerator;
 use Lemonade\Image\Exceptions\Gd\GdImageOutputException;
 use Lemonade\Image\Exceptions\Image\ImageRenderException;
 use Lemonade\Image\Exceptions\Image\ImageTypeException;
 use Lemonade\Image\Exceptions\IOException;
+use Lemonade\Image\Generator\AppGenerator;
 use Throwable;
 
 use function array_flip;

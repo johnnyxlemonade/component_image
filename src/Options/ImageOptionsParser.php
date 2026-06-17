@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lemonade\Image;
+namespace Lemonade\Image\Options;
 
 use function ctype_digit;
 use function ctype_xdigit;
@@ -16,20 +16,18 @@ use function preg_match;
 use function sprintf;
 
 /**
- * Parses compact image option strings into normalized transformation settings.
+ * Parses compact image option arguments into normalized image options.
  *
- * Converts URL argument fragments into resize dimensions, crop mode, canvas
- * color, fallback mode and output quality.
+ * Converts request argument strings and presets into a validated immutable
+ * options DTO used by the image processing workflow.
  *
  * @package     Lemonade
- * @subpackage  Image
- * @category    Parser
+ * @subpackage  Image\Options
+ * @category    Options
  * @link        https://lemonadeframework.cz
  * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
  * @since       1.0.0
- *
- * @see ImageOptionsDTO
  */
 final class ImageOptionsParser
 {

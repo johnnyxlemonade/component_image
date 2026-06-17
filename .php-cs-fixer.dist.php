@@ -57,6 +57,14 @@ return (new PhpCsFixer\Config())
         'single_blank_line_at_eof' => true,
         'no_extra_blank_lines' => true,
 
+        'visibility_required' => [
+            'elements' => [
+                'const',
+                'method',
+                'property',
+            ],
+        ],
+
         'no_superfluous_phpdoc_tags' => [
             'allow_mixed' => true,
         ],

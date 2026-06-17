@@ -2,24 +2,29 @@
 
 declare(strict_types=1);
 
-namespace Lemonade\Image\Providers;
+namespace Lemonade\Image\Http;
+
+use function gmdate;
+use function header;
 
 /**
  * Sends HTTP headers used by image responses and cache handling.
  *
+ * Centralizes response header output for content metadata, cache lifetime,
+ * last-modified handling and 304 Not Modified responses.
+ *
  * @package     Lemonade
- * @subpackage  Image\Providers
- * @category    Provider
+ * @subpackage  Image\Http
+ * @category    HTTP
  * @link        https://lemonadeframework.cz
  * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
  * @since       1.0.0
  */
-final class ServerHeaderProvider
+final class HttpResponseHeaders
 {
-    /**
-     * Nastaví základní cache hlavičky pro binární výstup.
-     */
+    private function __construct() {}
+
     public static function setCacheHeaders(int $lifetime, string $expires): void
     {
         header('Accept-Ranges: none');
@@ -29,48 +34,45 @@ final class ServerHeaderProvider
         header('Connection: close');
     }
 
-    /**
-     * Nastaví Content-Type, pokud je validní.
-     */
     public static function setContentType(?string $mime): void
     {
-        if ($mime !== null && $mime !== '') {
-            header("Content-Type: {$mime}");
+        if ($mime === null || $mime === '') {
+            return;
         }
+
+        header("Content-Type: {$mime}");
     }
 
-    /**
-     * Nastaví Content-Length pokud je > 0.
-     */
     public static function setContentLength(int $size): void
     {
-        if ($size > 0) {
-            header("Content-Length: {$size}");
+        if ($size <= 0) {
+            return;
         }
+
+        header("Content-Length: {$size}");
     }
 
-    /**
-     * Odeslání 304 Not Modified.
-     * Obsahuje výchozí X-Component hlavičku.
-     */
     public static function setNotModified(): void
     {
-        $protocol = ServerProvider::get('SERVER_PROTOCOL', 'HTTP/1.1');
+        $protocol = ServerRequest::get(
+            key: 'SERVER_PROTOCOL',
+            default: 'HTTP/1.1',
+        );
 
         header('Connection: close');
         header('X-Component: Lemonade Image');
         header("{$protocol} 304 Not Modified");
     }
 
-    /**
-     * Nastaví Last-Modified včetně správného HTTP kódu.
-     */
     public static function setLastModified(int $timestamp, int $code): void
     {
         header(
-            'Last-Modified: ' . gmdate('D, d M Y H:i:s', $timestamp) . ' GMT',
-            true,
-            $code,
+            header: 'Last-Modified: ' . gmdate(
+                format: 'D, d M Y H:i:s',
+                timestamp: $timestamp,
+            ) . ' GMT',
+            replace: true,
+            response_code: $code,
         );
     }
 }

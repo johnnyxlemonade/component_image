@@ -2,26 +2,24 @@
 
 declare(strict_types=1);
 
-namespace Lemonade\Image;
+namespace Lemonade\Image\Options;
 
 use function json_encode;
 use function md5;
 
 /**
- * Carries normalized image transformation options.
+ * Carries normalized image processing options.
  *
- * Stores resize dimensions, crop mode, canvas color, fallback mode and output
- * quality in an immutable request configuration object.
+ * Provides immutable option values for sizing, cropping, quality, canvas
+ * color and fallback behavior used by image generation services.
  *
  * @package     Lemonade
- * @subpackage  Image
+ * @subpackage  Image\Options
  * @category    DTO
  * @link        https://lemonadeframework.cz
  * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
  * @since       1.0.0
- *
- * @see ImageOptionsParser
  */
 final class ImageOptionsDTO
 {
