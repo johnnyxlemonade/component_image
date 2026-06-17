@@ -11,6 +11,7 @@ use Lemonade\Image\Exceptions\Image\ImagePlaceholderException;
 use Lemonade\Image\Exceptions\Image\ImageTypeException;
 
 use Lemonade\Image\ImageResult;
+use Lemonade\Image\ImageStorageConfig;
 use Lemonade\Image\Options\ImageOptionsDTO;
 use Lemonade\Image\Value\RgbColor;
 
@@ -46,6 +47,7 @@ final class ImageGenerator
 
     public function __construct(
         private readonly ImageFileInspector $fileInspector,
+        private readonly ImageStorageConfig $storageConfig,
     ) {}
 
     public function createVariant(ImageFileContext $file): ImageResult
@@ -236,7 +238,7 @@ final class ImageGenerator
             );
         }
 
-        $thumb = $this->loadErrorThumb();
+        $thumb = $this->loadPlaceholderImage();
 
         $thumb->resize(
             width: (int) round($width * self::CANVAS_SCALE_NORMAL),
@@ -282,15 +284,15 @@ final class ImageGenerator
         return $image;
     }
 
-    private function loadErrorThumb(): AppGenerator
+    private function loadPlaceholderImage(): AppGenerator
     {
-        $custom = './themes/frontend/error.png';
+        $placeholder = $this->storageConfig->getPlaceholderImageFile();
 
-        if ($this->fileInspector->exists(
-            file: $custom,
+        if ($placeholder !== '' && $this->fileInspector->exists(
+            file: $placeholder,
         )) {
             return AppGenerator::fromFile(
-                file: $custom,
+                file: $placeholder,
             );
         }
 

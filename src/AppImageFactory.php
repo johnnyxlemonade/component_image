@@ -64,6 +64,7 @@ final class AppImageFactory
             responseEmitter: $responseEmitter,
             generator: new ImageGenerator(
                 fileInspector: $fileInspector,
+                storageConfig: $this->storageConfig,
             ),
             fileInspector: $fileInspector,
         );

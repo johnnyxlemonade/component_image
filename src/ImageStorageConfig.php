@@ -28,6 +28,7 @@ final class ImageStorageConfig
         private readonly string $cacheDirectory = 'cache',
         private readonly string $fallbackModuleId = '0',
         private readonly string $fallbackStorageTypeId = '0',
+        private readonly string $placeholderImageFile = './themes/frontend/error.png',
     ) {}
 
     public static function createDefault(): self
@@ -60,5 +61,10 @@ final class ImageStorageConfig
             $this->fallbackModuleId,
             $this->fallbackStorageTypeId,
         );
+    }
+
+    public function getPlaceholderImageFile(): string
+    {
+        return $this->placeholderImageFile;
     }
 }
