@@ -44,7 +44,7 @@ final class ImageResponseEmitter
      * @var array<int, string>
      */
     private const MIME_TYPES = [
-        AppGenerator::JPEG => 'image/jpg',
+        AppGenerator::JPEG => 'image/jpeg',
         AppGenerator::PNG => 'image/png',
         AppGenerator::GIF => 'image/gif',
         AppGenerator::WEBP => 'image/webp',
