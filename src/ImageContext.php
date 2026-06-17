@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Lemonade\Image;
 
-use Lemonade\Image\Providers\DataProvider;
 use Lemonade\Image\Providers\DirectoryProvider;
 use Lemonade\Image\Utils\FileSystem;
 
@@ -22,9 +21,17 @@ final class ImageContext
         return $this->file;
     }
 
-    public function getData(): DataProvider
+    public function getOptions(): ImageOptionsDTO
     {
-        return $this->file->getData();
+        return $this->file->getOptions();
+    }
+
+    public function ensureFallbackSize(int $width, int $height): void
+    {
+        $this->file->ensureFallbackSize(
+            width: $width,
+            height: $height,
+        );
     }
 
     public function getDirectory(): DirectoryProvider

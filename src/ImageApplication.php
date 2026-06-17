@@ -67,12 +67,11 @@ final class ImageApplication
     private function createAndSendFallback(): void
     {
         $file = $this->context->getFile();
-        $data = $this->context->getData();
 
-        if ($data->isMissingAllSize()) {
-            $data->setWidth(600);
-            $data->setHeight(600);
-        }
+        $this->context->ensureFallbackSize(
+            width: 600,
+            height: 600,
+        );
 
         $result = $this->generator->createFallback(
             file: $file,

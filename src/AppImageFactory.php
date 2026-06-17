@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Lemonade\Image;
 
-use Lemonade\Image\Providers\DataProvider;
 use Lemonade\Image\Providers\DirectoryProvider;
 use Lemonade\Image\Utils\FileSystem;
 
@@ -63,12 +62,19 @@ final class AppImageFactory
             directory: $this->createDirectoryProvider(
                 request: $request,
             ),
-            data: $this->createDataProvider(
+            options: $this->createOptions(
                 request: $request,
             ),
             filesystem: $this->filesystem,
             file: $request->baseName,
         );
+    }
+
+    private function createOptions(ImageRequest $request): ImageOptionsDTO
+    {
+        return (new ImageOptionsParser(
+            args: $request->args,
+        ))->toDTO();
     }
 
     private function createDirectoryProvider(ImageRequest $request): DirectoryProvider
@@ -81,10 +87,4 @@ final class AppImageFactory
         );
     }
 
-    private function createDataProvider(ImageRequest $request): DataProvider
-    {
-        return new DataProvider(
-            args: $request->args,
-        );
-    }
 }

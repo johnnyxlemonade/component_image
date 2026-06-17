@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Lemonade\Image;
 
-use Lemonade\Image\Providers\DataProvider;
 use Lemonade\Image\Providers\DirectoryProvider;
 use Lemonade\Image\Utils\FileSystem;
 
@@ -18,6 +17,8 @@ use function substr;
  */
 final class ImageFileContext
 {
+    private ImageOptionsDTO $options;
+
     private string $sourceFile;
     private string $cacheFile;
     private string $cacheWebp;
@@ -26,10 +27,12 @@ final class ImageFileContext
 
     public function __construct(
         private readonly DirectoryProvider $directory,
-        private readonly DataProvider $data,
+        ImageOptionsDTO $options,
         private readonly FileSystem $filesystem,
         ?string $file = null,
     ) {
+        $this->options = $options;
+
         $this->resolveFile(
             file: $file ?? 'missing.png',
         );
@@ -60,9 +63,29 @@ final class ImageFileContext
         return $this->missingWebp;
     }
 
-    public function getData(): DataProvider
+    public function getOptions(): ImageOptionsDTO
     {
-        return $this->data;
+        return $this->options;
+    }
+
+    public function setOptions(ImageOptionsDTO $options): void
+    {
+        $this->options = $options;
+
+        $this->resolveMissingPaths();
+    }
+
+    public function ensureFallbackSize(int $width, int $height): void
+    {
+        if (!$this->options->isMissingAllSize()) {
+            return;
+        }
+
+        $this->setOptions(
+            options: $this->options
+                ->withWidth($width)
+                ->withHeight($height),
+        );
     }
 
     public function getDirectory(): DirectoryProvider
@@ -95,7 +118,7 @@ final class ImageFileContext
         );
 
         $cacheHash = substr(
-            sha1($this->sourceFile . '|' . $this->data->getHash()),
+            sha1($this->sourceFile . '|' . $this->options->getHash()),
             0,
             32,
         );
@@ -115,14 +138,19 @@ final class ImageFileContext
             $cacheHash,
         );
 
+        $this->resolveMissingPaths();
+    }
+
+    private function resolveMissingPaths(): void
+    {
         $this->missingPng = sprintf(
             './storage/0/cache/0/%s.png',
-            $this->data->getHash(),
+            $this->options->getHash(),
         );
 
         $this->missingWebp = sprintf(
             './storage/0/cache/0/%s.webp',
-            $this->data->getHash(),
+            $this->options->getHash(),
         );
     }
 }

@@ -31,7 +31,7 @@ final class ImageGenerator
 
     public function createVariant(ImageFileContext $file): ImageResult
     {
-        $options = $file->getData()->getDTO();
+        $options = $file->getOptions();
 
         $source = $this->loadSource(
             file: $file,
@@ -53,7 +53,7 @@ final class ImageGenerator
 
     public function createFallback(ImageFileContext $file): ImageResult
     {
-        $options = $file->getData()->getDTO();
+        $options = $file->getOptions();
 
         $type = WebpProvider::hasSupport()
             ? AppGenerator::WEBP
