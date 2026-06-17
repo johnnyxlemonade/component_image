@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Lemonade\Image;
+namespace Lemonade\Image\Http;
 
 use DateTimeImmutable;
 use Lemonade\Image\Exceptions\Image\ImageRenderException;
+
+use Lemonade\Image\Generator\AppGenerator;
+use Lemonade\Image\ImageResult;
 
 use function strlen;
 use function strtotime;

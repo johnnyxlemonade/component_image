@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Lemonade\Image;
 
+use Lemonade\Image\Generator\AppGenerator;
+
 /**
  * Carries a generated image together with its output metadata.
  */

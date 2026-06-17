@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lemonade\Image;
+namespace Lemonade\Image\Options;
 
 use function ctype_digit;
 use function ctype_xdigit;

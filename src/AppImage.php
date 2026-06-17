@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Lemonade\Image;
 
+use Lemonade\Image\Generator\ImageRequest;
+
 /**
  * Backward-compatible facade for framework integration.
  *

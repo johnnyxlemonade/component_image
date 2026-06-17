@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lemonade\Image;
+namespace Lemonade\Image\Detection;
 
 use function file_exists;
 

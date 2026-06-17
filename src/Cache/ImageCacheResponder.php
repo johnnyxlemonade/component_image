@@ -2,7 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Lemonade\Image;
+namespace Lemonade\Image\Cache;
+
+use Lemonade\Image\Context\ImageFileContext;
+use Lemonade\Image\Detection\ImageFileInspector;
+use Lemonade\Image\Detection\WebpSupportDetector;
+use Lemonade\Image\Generator\AppGenerator;
+use Lemonade\Image\Http\ImageResponseEmitter;
+use Lemonade\Image\Http\ServerRequest;
 
 use function file_get_contents;
 use function filemtime;

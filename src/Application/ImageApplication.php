@@ -2,8 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Lemonade\Image;
+namespace Lemonade\Image\Application;
 
+use Lemonade\Image\Cache\ImageCacheResponder;
+use Lemonade\Image\Cache\ImageCacheStorage;
+use Lemonade\Image\Context\ImageContext;
+use Lemonade\Image\Detection\ImageFileInspector;
+use Lemonade\Image\Generator\ImageGenerator;
+use Lemonade\Image\Http\ImageResponseEmitter;
 use Throwable;
 
 /**

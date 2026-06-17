@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lemonade\Image;
+namespace Lemonade\Image\Generator;
 
 /**
  * Carries raw image request input from framework routing.

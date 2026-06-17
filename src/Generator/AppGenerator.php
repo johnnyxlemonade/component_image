@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lemonade\Image;
+namespace Lemonade\Image\Generator;
 
 use GdImage;
 use Lemonade\Image\Exceptions\Gd\GdExtensionNotLoadedException;

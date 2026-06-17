@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lemonade\Image;
+namespace Lemonade\Image\Options;
 
 use function json_encode;
 use function md5;

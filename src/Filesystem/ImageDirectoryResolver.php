@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lemonade\Image;
+namespace Lemonade\Image\Filesystem;
 
+use Lemonade\Image\ImageStorageConfig;
 use Lemonade\Image\Utils\PathHelper;
 
 use function array_key_exists;

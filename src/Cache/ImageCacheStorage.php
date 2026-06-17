@@ -2,9 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Lemonade\Image;
+namespace Lemonade\Image\Cache;
 
+use Lemonade\Image\Context\ImageContext;
+use Lemonade\Image\Detection\WebpSupportDetector;
 use Lemonade\Image\Exceptions\IOException;
+use Lemonade\Image\Generator\AppGenerator;
+use Lemonade\Image\ImageResult;
 
 /**
  * Handles filesystem operations related to generated image cache files.

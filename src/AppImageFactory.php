@@ -4,6 +4,18 @@ declare(strict_types=1);
 
 namespace Lemonade\Image;
 
+use Lemonade\Image\Application\ImageApplication;
+use Lemonade\Image\Cache\ImageCacheResponder;
+use Lemonade\Image\Cache\ImageCacheStorage;
+use Lemonade\Image\Context\ImageContext;
+use Lemonade\Image\Context\ImageFileContext;
+use Lemonade\Image\Detection\ImageFileInspector;
+use Lemonade\Image\Filesystem\ImageDirectoryResolver;
+use Lemonade\Image\Generator\ImageGenerator;
+use Lemonade\Image\Generator\ImageRequest;
+use Lemonade\Image\Http\ImageResponseEmitter;
+use Lemonade\Image\Options\ImageOptionsDTO;
+use Lemonade\Image\Options\ImageOptionsParser;
 use Lemonade\Image\Utils\FileSystem;
 
 /**

@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Lemonade\Image\Utils;
 
-use Lemonade\Image\AppGenerator;
 use Lemonade\Image\Exceptions\InvalidArgumentException;
+
+use Lemonade\Image\Generator\AppGenerator;
 
 use function abs;
 use function is_int;

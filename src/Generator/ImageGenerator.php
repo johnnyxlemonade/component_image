@@ -2,10 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Lemonade\Image;
+namespace Lemonade\Image\Generator;
 
+use Lemonade\Image\Context\ImageFileContext;
+use Lemonade\Image\Detection\ImageFileInspector;
+use Lemonade\Image\Detection\WebpSupportDetector;
 use Lemonade\Image\Exceptions\Image\ImagePlaceholderException;
 use Lemonade\Image\Exceptions\Image\ImageTypeException;
+
+use Lemonade\Image\ImageResult;
+use Lemonade\Image\Options\ImageOptionsDTO;
+use Lemonade\Image\Value\RgbColor;
 
 use function imagecolorallocatealpha;
 use function imagecreatetruecolor;

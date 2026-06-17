@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lemonade\Image;
+namespace Lemonade\Image\Detection;
+
+use Lemonade\Image\Http\ServerRequest;
 
 use function function_exists;
 use function str_contains;

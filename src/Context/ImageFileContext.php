@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lemonade\Image;
+namespace Lemonade\Image\Context;
 
+use Lemonade\Image\Filesystem\ImageDirectoryResolver;
+use Lemonade\Image\Options\ImageOptionsDTO;
 use Lemonade\Image\Utils\FileSystem;
 use Lemonade\Image\Utils\PathHelper;
 
