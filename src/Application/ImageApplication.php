@@ -56,7 +56,7 @@ final class ImageApplication
         if (!$this->fileInspector->exists(
             file: $file->getSourceFile(),
         )) {
-            $this->cacheStorage->deleteCache(
+            $this->cacheStorage->deleteVariantCache(
                 context: $this->context,
             );
 

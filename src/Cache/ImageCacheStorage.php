@@ -49,6 +49,19 @@ final class ImageCacheStorage
         }
     }
 
+    public function deleteVariantCache(ImageContext $context): void
+    {
+        $this->deleteFileIfPossible(
+            context: $context,
+            file: $context->getCacheFile(),
+        );
+
+        $this->deleteFileIfPossible(
+            context: $context,
+            file: $context->getCacheWebp(),
+        );
+    }
+
     public function saveVariant(ImageContext $context, ImageResult $result): void
     {
         try {
@@ -70,6 +83,17 @@ final class ImageCacheStorage
             );
         } catch (Throwable) {
             // Fallback cache write failure must not prevent fallback response.
+        }
+    }
+
+    private function deleteFileIfPossible(ImageContext $context, string $file): void
+    {
+        try {
+            $context->getFilesystem()->delete(
+                path: $file,
+            );
+        } catch (IOException) {
+            // Cache cleanup failure must not prevent image response.
         }
     }
 
