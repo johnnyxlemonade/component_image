@@ -1,5 +1,10 @@
 # Lemonade Image Component
 
+[![PHPStan](https://github.com/johnnyxlemonade/component_image/actions/workflows/phpstan.yml/badge.svg)](https://github.com/johnnyxlemonade/framework/actions/workflows/phpstan.yml)
+[![Tests](https://github.com/johnnyxlemonade/component_image/actions/workflows/phpunit.yml/badge.svg)](https://github.com/johnnyxlemonade/framework/actions/workflows/phpunit.yml)
+[![Lint](https://github.com/johnnyxlemonade/component_image/actions/workflows/lint.yml/badge.svg)](https://github.com/johnnyxlemonade/framework/actions/workflows/lint.yml)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 Standalone GD-based image component for PHP 8.1+.
 
 This package provides image loading, resizing, cropping, cache generation and WEBP output support. It is designed as a reusable component and can be used independently in different PHP projects.
