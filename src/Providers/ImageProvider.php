@@ -273,11 +273,11 @@ final class ImageProvider
 
         $app->createDirectory($png);
 
-        $image->save($png, $quality, AppGenerator::PNG);
+        $image->save($png, $quality, AppGenerator::PNG, $app->getFilesystem());
 
         if ($ext === AppGenerator::WEBP) {
             $image->paletteToTrueColor();
-            $image->save($webp, $quality, AppGenerator::WEBP);
+            $image->save($webp, $quality, AppGenerator::WEBP, $app->getFilesystem());
         }
     }
 
@@ -417,8 +417,7 @@ final class ImageProvider
         $app->createDirectory($cacheFile);
 
         if (!WebpProvider::hasSupport()) {
-            $image->save($cacheFile, $quality, $imgExt);
-
+            $image->save($cacheFile, $quality, $imgExt, $app->getFilesystem());
             return;
         }
 
@@ -427,7 +426,7 @@ final class ImageProvider
             $image->paletteToTrueColor();
         }
 
-        $image->save($cacheWebp, $quality, AppGenerator::WEBP);
+        $image->save($cacheWebp, $quality, AppGenerator::WEBP, $app->getFilesystem());
     }
 
     /**

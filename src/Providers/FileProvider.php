@@ -103,6 +103,14 @@ final class FileProvider
     }
 
     /**
+     * Returns filesystem utility used by this file provider.
+     */
+    public function getFilesystem(): FileSystem
+    {
+        return $this->filesystem;
+    }
+
+    /**
      * Ověří existenci souboru.
      */
     public function isFileExists(?string $file): bool
