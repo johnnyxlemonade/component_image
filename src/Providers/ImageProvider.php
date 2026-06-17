@@ -443,24 +443,6 @@ final class ImageProvider
     }
 
     /**
-     * Outputs final image to browser.
-     */
-    private static function outputImage(
-        AppGenerator $image,
-        int $imgExt,
-        int $quality,
-    ): never {
-        $data = $image->toString($imgExt, $quality);
-
-        if ($data === '') {
-            throw ImageRenderException::failed();
-        }
-
-        self::sendHeader($imgExt, strlen($data));
-        self::sendContent($data);
-    }
-
-    /**
      * Detects image type based on source file.
      */
     private static function getType(FileProvider $app): int
