@@ -58,13 +58,13 @@ final class ImageContext
         return $this->file->getCacheWebp();
     }
 
-    public function getMissingPng(): string
+    public function getFallbackPng(): string
     {
-        return $this->file->getMissingPng();
+        return $this->file->getFallbackPng();
     }
 
-    public function getMissingWebp(): string
+    public function getFallbackWebp(): string
     {
-        return $this->file->getMissingWebp();
+        return $this->file->getFallbackWebp();
     }
 }

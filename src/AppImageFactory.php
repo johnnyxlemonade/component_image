@@ -17,11 +17,13 @@ final class AppImageFactory
     {
         return new self(
             filesystem: new FileSystem(),
+            storageConfig: ImageStorageConfig::createDefault(),
         );
     }
 
     public function __construct(
         private readonly FileSystem $filesystem,
+        private readonly ImageStorageConfig $storageConfig,
     ) {}
 
     public function createApplication(ImageRequest $request): ImageApplication
@@ -79,6 +81,7 @@ final class AppImageFactory
     private function createDirectoryResolver(ImageRequest $request): ImageDirectoryResolver
     {
         return new ImageDirectoryResolver(
+            config: $this->storageConfig,
             level: $request->level,
             storageTypeId: $request->storageTypeId,
             moduleId: $request->moduleId,

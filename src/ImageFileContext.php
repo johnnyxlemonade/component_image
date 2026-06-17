@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lemonade\Image;
 
 use Lemonade\Image\Utils\FileSystem;
+use Lemonade\Image\Utils\PathHelper;
 
 use function pathinfo;
 use function sha1;
@@ -21,8 +22,8 @@ final class ImageFileContext
     private string $sourceFile;
     private string $cacheFile;
     private string $cacheWebp;
-    private string $missingPng;
-    private string $missingWebp;
+    private string $fallbackPng;
+    private string $fallbackWebp;
 
     public function __construct(
         private readonly ImageDirectoryResolver $directory,
@@ -52,14 +53,14 @@ final class ImageFileContext
         return $this->cacheWebp;
     }
 
-    public function getMissingPng(): string
+    public function getFallbackPng(): string
     {
-        return $this->missingPng;
+        return $this->fallbackPng;
     }
 
-    public function getMissingWebp(): string
+    public function getFallbackWebp(): string
     {
-        return $this->missingWebp;
+        return $this->fallbackWebp;
     }
 
     public function getOptions(): ImageOptionsDTO
@@ -71,7 +72,7 @@ final class ImageFileContext
     {
         $this->options = $options;
 
-        $this->resolveMissingPaths();
+        $this->resolveFallbackPaths();
     }
 
     public function ensureFallbackSize(int $width, int $height): void
@@ -109,11 +110,13 @@ final class ImageFileContext
             ? $info['extension']
             : 'png';
 
-        $this->sourceFile = sprintf(
-            '%s/%s.%s',
-            $this->directory->getStorage(),
-            $filename,
-            $extension,
+        $this->sourceFile = PathHelper::file(
+            directory: $this->directory->getStorage(),
+            filename: sprintf(
+                '%s.%s',
+                $filename,
+                $extension,
+            ),
         );
 
         $cacheHash = substr(
@@ -122,34 +125,36 @@ final class ImageFileContext
             32,
         );
 
-        $this->cacheFile = sprintf(
-            '%s/%s-%s.%s',
-            $this->directory->getCache(),
-            $filename,
-            $cacheHash,
-            $extension,
+        $this->cacheFile = PathHelper::file(
+            directory: $this->directory->getCache(),
+            filename: sprintf(
+                '%s-%s.%s',
+                $filename,
+                $cacheHash,
+                $extension,
+            ),
         );
 
-        $this->cacheWebp = sprintf(
-            '%s/%s-%s.webp',
-            $this->directory->getCache(),
-            $filename,
-            $cacheHash,
+        $this->cacheWebp = PathHelper::file(
+            directory: $this->directory->getCache(),
+            filename: sprintf(
+                '%s-%s.webp',
+                $filename,
+                $cacheHash,
+            ),
         );
 
-        $this->resolveMissingPaths();
+        $this->resolveFallbackPaths();
     }
 
-    private function resolveMissingPaths(): void
+    private function resolveFallbackPaths(): void
     {
-        $this->missingPng = sprintf(
-            './storage/0/cache/0/%s.png',
-            $this->options->getHash(),
+        $this->fallbackPng = $this->directory->getFallbackPng(
+            hash: $this->options->getHash(),
         );
 
-        $this->missingWebp = sprintf(
-            './storage/0/cache/0/%s.webp',
-            $this->options->getHash(),
+        $this->fallbackWebp = $this->directory->getFallbackWebp(
+            hash: $this->options->getHash(),
         );
     }
 }

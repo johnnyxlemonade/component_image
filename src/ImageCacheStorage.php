@@ -73,8 +73,8 @@ final class ImageCacheStorage
 
     public function saveFallback(ImageContext $context, ImageResult $result): void
     {
-        $png = $context->getMissingPng();
-        $webp = $context->getMissingWebp();
+        $png = $context->getFallbackPng();
+        $webp = $context->getFallbackWebp();
 
         $this->createDirectoryForFile(
             context: $context,

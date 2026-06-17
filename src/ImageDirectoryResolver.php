@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Lemonade\Image;
 
+use Lemonade\Image\Utils\PathHelper;
+
 use function array_key_exists;
 use function chunk_split;
 use function dechex;
@@ -31,6 +33,7 @@ final class ImageDirectoryResolver
     private string $cacheDirectory;
 
     public function __construct(
+        private readonly ImageStorageConfig $config,
         private readonly int $level,
         string|int|null $storageTypeId = null,
         string|int|null $moduleId = null,
@@ -53,6 +56,33 @@ final class ImageDirectoryResolver
         return $this->cacheDirectory;
     }
 
+    public function getFallbackCache(): string
+    {
+        return $this->config->getFallbackCacheDirectory();
+    }
+
+    public function getFallbackPng(string $hash): string
+    {
+        return PathHelper::file(
+            directory: $this->getFallbackCache(),
+            filename: sprintf(
+                '%s.png',
+                $hash,
+            ),
+        );
+    }
+
+    public function getFallbackWebp(string $hash): string
+    {
+        return PathHelper::file(
+            directory: $this->getFallbackCache(),
+            filename: sprintf(
+                '%s.webp',
+                $hash,
+            ),
+        );
+    }
+
     private function resolveDirectories(
         string|int|null $storageTypeId = null,
         string|int|null $moduleId = null,
@@ -66,17 +96,15 @@ final class ImageDirectoryResolver
             artId: $artId,
         );
 
-        $this->storageDirectory = sprintf(
-            $this->pathFormat(),
-            'storage',
+        $this->storageDirectory = PathHelper::join(
+            $this->config->getStorageBase(),
             (string) ($moduleId ?? '0'),
             $directoryId,
             $structure,
         );
 
-        $this->cacheDirectory = sprintf(
-            $this->pathFormat(),
-            'storage' . DIRECTORY_SEPARATOR . '0' . DIRECTORY_SEPARATOR . 'cache',
+        $this->cacheDirectory = PathHelper::join(
+            $this->config->getCacheBase(),
             (string) ($moduleId ?? '0'),
             $directoryId,
             $structure,
@@ -111,17 +139,5 @@ final class ImageDirectoryResolver
         }
 
         return (string) $typeId;
-    }
-
-    private function pathFormat(): string
-    {
-        $ds = DIRECTORY_SEPARATOR;
-
-        return
-            '.' . $ds .
-            '%s' . $ds .
-            '%s' . $ds .
-            '%s' . $ds .
-            '%s';
     }
 }

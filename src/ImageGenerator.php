@@ -207,13 +207,13 @@ final class ImageGenerator
             $height = $width;
         }
 
-        $missingPng = $file->getMissingPng();
+        $fallbackPng = $file->getFallbackPng();
 
         if ($this->fileInspector->exists(
-            file: $missingPng,
+            file: $fallbackPng,
         )) {
             return AppGenerator::fromFile(
-                file: $missingPng,
+                file: $fallbackPng,
             );
         }
 
