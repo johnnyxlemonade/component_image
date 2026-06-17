@@ -1,9 +1,10 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Lemonade\Image\Providers;
 
 use Lemonade\Image\Interfaces\ToArrayInterface;
-use Lemonade\Image\Traits\StaticTrait;
 
 /**
  * ColorProvider
@@ -25,18 +26,16 @@ use Lemonade\Image\Traits\StaticTrait;
  */
 final class ColorProvider implements ToArrayInterface
 {
-    use StaticTrait;
-
     public function __construct(
-        private int $red,
-        private int $green,
-        private int $blue,
+        private readonly int $red,
+        private readonly int $green,
+        private readonly int $blue,
     ) {}
 
     /**
      * Vrátí RGB hodnoty ve formátu pro GD (0–255).
      *
-     * @return array<string, int>
+     * @return array{red: int, green: int, blue: int}
      */
     public function toArray(): array
     {
@@ -52,8 +51,17 @@ final class ColorProvider implements ToArrayInterface
      */
     public static function hexRgb(string $hex): self
     {
-        [$r, $g, $b] = sscanf(ltrim($hex, '#'), '%02x%02x%02x');
-        return new self($r, $g, $b);
+        $hex = ltrim(trim($hex), '#');
+
+        if (preg_match('/^[0-9a-fA-F]{6}$/', $hex) !== 1) {
+            return new self(0, 0, 0);
+        }
+
+        return new self(
+            (int) hexdec(substr($hex, 0, 2)),
+            (int) hexdec(substr($hex, 2, 2)),
+            (int) hexdec(substr($hex, 4, 2)),
+        );
     }
 
     /**

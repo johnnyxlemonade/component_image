@@ -1,11 +1,27 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Lemonade\Image\Providers;
 
+use DateTimeImmutable;
 use Lemonade\Image\AppGenerator;
 use Lemonade\Image\ImageOptionsDTO;
-use DateTimeImmutable;
 use RuntimeException;
+
+use function file_exists;
+use function imagecolorallocatealpha;
+use function imagecreatetruecolor;
+use function imagedestroy;
+use function imagefill;
+use function imagepng;
+use function imagesavealpha;
+use function ob_get_clean;
+use function ob_start;
+use function round;
+use function strlen;
+use function strtotime;
+use function time;
 
 /**
  * ImageProvider
@@ -38,7 +54,10 @@ use RuntimeException;
  * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
  * @since       1.0.0
- * @see         AppImage, FileProvider, WebpProvider, ImageOptionsDTO
+ * @see         AppImage
+ * @see         FileProvider
+ * @see         WebpProvider
+ * @see         ImageOptionsDTO
  */
 final class ImageProvider
 {
@@ -48,7 +67,7 @@ final class ImageProvider
     private const CANVAS_SCALE_MAX = 0.90;
 
     /**
-     * MIME typy
+     * MIME typy.
      *
      * @var array<int, string>
      */
@@ -60,7 +79,7 @@ final class ImageProvider
     ];
 
     /**
-     * Main image processing entrypoint
+     * Main image processing entrypoint.
      */
     public static function imageCreate(FileProvider $app): void
     {
@@ -69,7 +88,7 @@ final class ImageProvider
         $src = self::loadSource($app);
         $img = self::processResize($src, $opt);
 
-        $imgExt  = self::getType($app);
+        $imgExt = self::getType($app);
         $quality = $opt->getQuality();
 
         self::saveCache($app, $img, $quality, $imgExt);
@@ -77,7 +96,7 @@ final class ImageProvider
     }
 
     /**
-     * Generates or loads fallback error image
+     * Generates or loads fallback error image.
      */
     public static function imageError(FileProvider $app): void
     {
@@ -93,16 +112,16 @@ final class ImageProvider
     }
 
     /**
-     * Sends HTTP headers for image response
+     * Sends HTTP headers for image response.
      */
-    public static function sendHeader(int $mime = null, int $size = 0): void
+    public static function sendHeader(?int $mime = null, int $size = 0): void
     {
         $lifetime = self::APP_TIME;
 
-        $now       = new DateTimeImmutable();
+        $now = new DateTimeImmutable();
         $expiresAt = $now
                 ->modify("+{$lifetime} seconds")
-                ->format("D, d M Y H:i:s") . " GMT";
+                ->format('D, d M Y H:i:s') . ' GMT';
 
         $mimeStr = $mime !== null && isset(self::MIME_TYPES[$mime])
             ? self::MIME_TYPES[$mime]
@@ -116,8 +135,10 @@ final class ImageProvider
         }
 
         // Conditional GET
-        $ifMod      = ServerProvider::get("HTTP_IF_MODIFIED_SINCE");
-        $clientTime = $ifMod !== '' ? strtotime($ifMod) : 0;
+        $ifMod = ServerProvider::get('HTTP_IF_MODIFIED_SINCE');
+        $parsedClientTime = $ifMod !== '' ? strtotime($ifMod) : false;
+        $clientTime = $parsedClientTime === false ? 0 : $parsedClientTime;
+
         $serverTime = (int) ServerProvider::get('REQUEST_TIME', (string) time());
 
         if ($clientTime > ($serverTime - $lifetime)) {
@@ -129,7 +150,7 @@ final class ImageProvider
     }
 
     /**
-     * 304 No Modified shortcut
+     * 304 Not Modified shortcut.
      */
     public static function setNoModified(): void
     {
@@ -137,16 +158,16 @@ final class ImageProvider
     }
 
     /**
-     * Outputs image binary and terminates
+     * Outputs image binary and terminates.
      */
-    public static function sendContent(string $content = null): never
+    public static function sendContent(?string $content = null): never
     {
         echo $content ?? '';
         exit;
     }
 
     /**
-     * Loads custom error.png or generates 1×1 PNG
+     * Loads custom error.png or generates 1×1 PNG.
      */
     private static function loadErrorThumb(): AppGenerator
     {
@@ -158,12 +179,20 @@ final class ImageProvider
 
         // 1×1 bílý PNG generovaný v paměti
         $img = imagecreatetruecolor(1, 1);
+        if ($img === false) {
+            throw new RuntimeException('Unable to create fallback error image.');
+        }
 
         // Povolit alfa kanál
         imagesavealpha($img, true);
 
         // Bílá barva bez průhlednosti
         $white = imagecolorallocatealpha($img, 255, 255, 255, 0);
+        if ($white === false) {
+            imagedestroy($img);
+            throw new RuntimeException('Unable to allocate fallback error image color.');
+        }
+
         imagefill($img, 0, 0, $white);
 
         ob_start();
@@ -171,30 +200,37 @@ final class ImageProvider
         $png = ob_get_clean();
         imagedestroy($img);
 
+        if ($png === false) {
+            throw new RuntimeException('Unable to render fallback error image.');
+        }
+
         return AppGenerator::fromString($png);
     }
 
     /**
-     * Builds placeholder image with canvas color + centered icon
+     * Builds placeholder image with canvas color + centered icon.
      */
     private static function buildErrorImage(ImageOptionsDTO $opt, FileProvider $app): AppGenerator
     {
-        $width  = $opt->getWidth();
+        $width = $opt->getWidth();
         $height = $opt->getHeight();
         $canvas = $opt->getCanvasColor();
 
         // fallback dimensions
         if ($width === null && $height === null) {
-            $width = $height = 600;
+            $width = 600;
+            $height = 600;
         } elseif ($width === null) {
             $width = $height;
         } elseif ($height === null) {
             $height = $width;
         }
 
+        $missingPng = $app->getMissingPng();
+
         // reuse cached version
-        if ($app->isFileExists($app->getMissingPng())) {
-            return AppGenerator::fromFile($app->getMissingPng());
+        if ($missingPng !== null && $app->isFileExists($missingPng)) {
+            return AppGenerator::fromFile($missingPng);
         }
 
         // thumbImage
@@ -225,13 +261,13 @@ final class ImageProvider
         );
         $image->fill(0, 0, $alpha);
         $image->saveAlpha(true);
-        $image->place($thumb, "50%", "50%", 70);
+        $image->place($thumb, '50%', '50%', 70);
 
         return $image;
     }
 
     /**
-     * Saves PNG/WebP versions of fallback image
+     * Saves PNG/WebP versions of fallback image.
      */
     private static function saveErrorCache(
         FileProvider $app,
@@ -239,9 +275,12 @@ final class ImageProvider
         int $quality,
         int $ext
     ): void {
-
         $png = $app->getMissingPng();
         $webp = $app->getMissingWebp();
+
+        if ($png === null || $webp === null) {
+            throw new RuntimeException('Missing error cache file path.');
+        }
 
         $app->createDirectory($png);
 
@@ -254,15 +293,21 @@ final class ImageProvider
     }
 
     /**
-     * Loads source file
+     * Loads source file.
      */
     private static function loadSource(FileProvider $app): AppGenerator
     {
-        return AppGenerator::fromFile($app->getFileFs());
+        $file = $app->getFileFs();
+
+        if ($file === null) {
+            throw new RuntimeException('Missing source image file path.');
+        }
+
+        return AppGenerator::fromFile($file);
     }
 
     /**
-     * Selects resize mode
+     * Selects resize mode.
      */
     private static function processResize(AppGenerator $src, ImageOptionsDTO $opt): AppGenerator
     {
@@ -306,13 +351,13 @@ final class ImageProvider
         );
 
         $image->saveAlpha(true);
-        $image->place($thumb, "50%", "50%");
+        $image->place($thumb, '50%', '50%');
 
         return $image;
     }
 
     /**
-     * Resize mode: EXACT fill
+     * Resize mode: EXACT fill.
      */
     private static function resizeExact(AppGenerator $src, ImageOptionsDTO $opt): AppGenerator
     {
@@ -321,8 +366,8 @@ final class ImageProvider
 
         $img = clone $src;
         $img->resize(
-            ($w ?? $h ?? $img->getWidth()),
-            ($h ?? $w ?? $img->getHeight()),
+            $w ?? $h ?? $img->getWidth(),
+            $h ?? $w ?? $img->getHeight(),
             AppGenerator::EXACT,
             true
         );
@@ -331,7 +376,7 @@ final class ImageProvider
     }
 
     /**
-     * Resize mode: FIT
+     * Resize mode: FIT.
      */
     private static function resizeFit(AppGenerator $src, ImageOptionsDTO $opt): AppGenerator
     {
@@ -341,11 +386,12 @@ final class ImageProvider
             $opt->getHeight(),
             AppGenerator::FIT | AppGenerator::SHRINK_ONLY
         );
+
         return $img;
     }
 
     /**
-     * Resize mode: SHRINK_ONLY (default)
+     * Resize mode: SHRINK_ONLY (default).
      */
     private static function resizeShrink(AppGenerator $src, ImageOptionsDTO $opt): AppGenerator
     {
@@ -354,8 +400,8 @@ final class ImageProvider
 
         $img = clone $src;
         $img->resize(
-            ($w ?? $h ?? $img->getWidth()),
-            ($h ?? $w ?? $img->getHeight()),
+            $w ?? $h ?? $img->getWidth(),
+            $h ?? $w ?? $img->getHeight(),
             AppGenerator::SHRINK_ONLY,
             true
         );
@@ -364,19 +410,25 @@ final class ImageProvider
     }
 
     /**
-     * Saves processed image into cache directory
+     * Saves processed image into cache directory.
      */
     private static function saveCache(
         FileProvider $app,
         AppGenerator $image,
         int $quality,
         int $imgExt
-    ): void
-    {
-        $app->createDirectory($app->getCacheFile());
+    ): void {
+        $cacheFile = $app->getCacheFile();
+        $cacheWebp = $app->getCacheWebp();
+
+        if ($cacheFile === null || $cacheWebp === null) {
+            throw new RuntimeException('Missing cache file path.');
+        }
+
+        $app->createDirectory($cacheFile);
 
         if (!WebpProvider::hasSupport()) {
-            $image->save($app->getCacheFile(), $quality, $imgExt);
+            $image->save($cacheFile, $quality, $imgExt);
             return;
         }
 
@@ -385,21 +437,20 @@ final class ImageProvider
             $image->paletteToTrueColor();
         }
 
-        $image->save($app->getCacheWebp(), $quality, AppGenerator::WEBP);
+        $image->save($cacheWebp, $quality, AppGenerator::WEBP);
     }
 
     /**
-     * Outputs final image to browser
+     * Outputs final image to browser.
      */
     private static function outputImage(
         AppGenerator $image,
         int $imgExt,
         int $quality
-    ): never
-    {
+    ): never {
         $data = $image->toString($imgExt, $quality);
 
-        if ($data === '' || $data === null) {
+        if ($data === '') {
             throw new RuntimeException('Image rendering failed');
         }
 
@@ -408,11 +459,22 @@ final class ImageProvider
     }
 
     /**
-     * Detects image type based on source file
+     * Detects image type based on source file.
      */
-    private static function getType(FileProvider $app): ?int
+    private static function getType(FileProvider $app): int
     {
-        return AppGenerator::detectTypeFromFile($app->getFileFs());
-    }
+        $file = $app->getFileFs();
 
+        if ($file === null) {
+            throw new RuntimeException('Missing source image file path.');
+        }
+
+        $type = AppGenerator::detectTypeFromFile($file);
+
+        if ($type === null) {
+            throw new RuntimeException('Unable to detect source image type.');
+        }
+
+        return $type;
+    }
 }

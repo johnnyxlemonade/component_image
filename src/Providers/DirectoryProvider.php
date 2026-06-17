@@ -1,14 +1,18 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Lemonade\Image\Providers;
 
+use function array_key_exists;
+use function chunk_split;
+use function dechex;
+use function is_string;
 use function rtrim;
 use function sprintf;
-use function chunk_split;
 use function str_pad;
-use function dechex;
+
 use const DIRECTORY_SEPARATOR;
-use const PHP_EOL;
 use const STR_PAD_LEFT;
 
 /**
@@ -55,12 +59,12 @@ final class DirectoryProvider
     /**
      * Cesta k originálním souborům.
      */
-    private ?string $storageDirectory = null;
+    private string $storageDirectory;
 
     /**
      * Cesta ke cache souborům.
      */
-    private ?string $cacheDirectory = null;
+    private string $cacheDirectory;
 
     public function __construct(
         int $level,
@@ -68,7 +72,6 @@ final class DirectoryProvider
         string|int|null $moduleId = null,
         string|int|null $artId = null
     ) {
-
         $this->pathFormat = self::pathFormat();
 
         $this->setLevel($level);
@@ -78,7 +81,7 @@ final class DirectoryProvider
     /**
      * Vrátí cestu ke storage adresáři.
      */
-    public function getStorage(): ?string
+    public function getStorage(): string
     {
         return $this->storageDirectory;
     }
@@ -86,7 +89,7 @@ final class DirectoryProvider
     /**
      * Vrátí cestu ke cache adresáři.
      */
-    public function getCache(): ?string
+    public function getCache(): string
     {
         return $this->cacheDirectory;
     }
@@ -108,12 +111,12 @@ final class DirectoryProvider
         string|int|null $artId = null
     ): void {
         $directoryId = $this->resolveDirectoryId($storageTypeId);
-        $structure   = $this->buildDirectoryStructure($artId);
+        $structure = $this->buildDirectoryStructure($artId);
 
         $this->storageDirectory = sprintf(
             $this->pathFormat,
             'storage',
-            $moduleId,
+            (string) ($moduleId ?? '0'),
             $directoryId,
             $structure
         );
@@ -121,7 +124,7 @@ final class DirectoryProvider
         $this->cacheDirectory = sprintf(
             $this->pathFormat,
             'storage' . DIRECTORY_SEPARATOR . '0' . DIRECTORY_SEPARATOR . 'cache',
-            $moduleId,
+            (string) ($moduleId ?? '0'),
             $directoryId,
             $structure
         );
@@ -158,9 +161,17 @@ final class DirectoryProvider
     /**
      * Přeloží typ uložiště na adresářový identifikátor.
      */
-    private function resolveDirectoryId(?string $typeId): string
+    private function resolveDirectoryId(string|int|null $typeId): string
     {
-        return (string) (self::MODULE_MAP[$typeId] ?? $typeId ?? '0');
+        if ($typeId === null) {
+            return '0';
+        }
+
+        if (is_string($typeId) && array_key_exists($typeId, self::MODULE_MAP)) {
+            return (string) self::MODULE_MAP[$typeId];
+        }
+
+        return (string) $typeId;
     }
 
     private static function pathFormat(): string

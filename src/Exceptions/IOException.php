@@ -1,9 +1,14 @@
-<?php declare(strict_types=1);
+<?php
 
+declare(strict_types=1);
 
 namespace Lemonade\Image\Exceptions;
 
+use RuntimeException;
+
 /**
- * The exception that is thrown when an I/O error occurs.
+ * Base exception for filesystem I/O failures.
  */
-class IOException extends \RuntimeException {}
+class IOException extends RuntimeException implements ImageException
+{
+}

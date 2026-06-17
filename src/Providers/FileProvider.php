@@ -140,7 +140,7 @@ final class FileProvider
     public function createDirectory(string $file): void
     {
         try {
-            $this->filesystem->createDir(dirname($file));
+            $this->filesystem->createDirForFile($file);
         } catch (IOException) {
             // silent by design
         }
@@ -176,7 +176,7 @@ final class FileProvider
         }
 
         $cacheFile = $this->resolveCacheFile();
-        if (!$this->isFileExists($cacheFile)) {
+        if ($cacheFile === null || !$this->isFileExists($cacheFile)) {
             return false;
         }
 
@@ -200,7 +200,7 @@ final class FileProvider
         }
 
         $cacheFile = $this->resolveCacheFile();
-        if (!$this->isFileExists($cacheFile)) {
+        if ($cacheFile === null || !$this->isFileExists($cacheFile)) {
             return false;
         }
 
@@ -216,10 +216,12 @@ final class FileProvider
 
         $type = $this->resolveOutputType($cacheFile);
 
+        if ($type === null) {
+            return false;
+        }
+
         ImageProvider::sendHeader($type, $size);
         ImageProvider::sendContent($content);
-
-        return true;
     }
 
     /**
@@ -229,7 +231,7 @@ final class FileProvider
     {
         $info = pathinfo($file);
 
-        $filename = $info['filename'] ?? 'missing';
+        $filename = $info['filename'] !== '' ? $info['filename'] : 'missing';
         $extension = $info['extension'] ?? 'png';
 
         $this->appFileFs = sprintf(
@@ -285,10 +287,12 @@ final class FileProvider
     /**
      * Detekuje MIME typ pro odeslání cache souboru.
      */
-    private function resolveOutputType(string $file): int
+    private function resolveOutputType(string $file): ?int
     {
-        return WebpProvider::hasSupport()
-            ? AppGenerator::WEBP
-            : AppGenerator::detectTypeFromFile($file);
+        if (WebpProvider::hasSupport()) {
+            return AppGenerator::WEBP;
+        }
+
+        return AppGenerator::detectTypeFromFile($file);
     }
 }

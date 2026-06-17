@@ -1,10 +1,14 @@
-<?php declare(strict_types=1);
+<?php
 
+declare(strict_types=1);
 
 namespace Lemonade\Image\Exceptions;
 
+use RuntimeException;
+
 /**
- * The exception that is thrown when a method call is invalid for the object's
- * current state, method has been invoked at an illegal or inappropriate time.
+ * Thrown when an operation is invalid for the current object state.
  */
-class InvalidStateException extends \RuntimeException {}
+class InvalidStateException extends RuntimeException implements ImageException
+{
+}

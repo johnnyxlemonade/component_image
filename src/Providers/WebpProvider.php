@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Lemonade\Image\Providers;
 
@@ -20,18 +22,16 @@ final class WebpProvider
     /**
      * Zjistí podporu WebP na straně klienta.
      *
-     * Podmínky (zachováno 1:1 s originálem):
+     * Podmínky:
      * - HTTP_ACCEPT obsahuje "image/webp"
      * - nebo User-Agent obsahuje " Chrome/"
      */
     public static function hasSupport(): bool
     {
         $accept = ServerProvider::get('HTTP_ACCEPT');
-        $agent  = ServerProvider::get('HTTP_USER_AGENT');
+        $agent = ServerProvider::get('HTTP_USER_AGENT');
 
-        return (
-            strpos($accept, 'image/webp') !== false
-            || strpos($agent, ' Chrome/') !== false
-        );
+        return str_contains($accept, 'image/webp')
+            || str_contains($agent, ' Chrome/');
     }
 }

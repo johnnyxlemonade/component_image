@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Lemonade\Image\Interfaces;
 
@@ -20,6 +22,8 @@ interface ToArrayInterface
 {
     /**
      * Vrátí objekt ve formě asociativního pole.
+     *
+     * @return array<string, mixed>
      */
     public function toArray(): array;
 }

@@ -1,11 +1,21 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Lemonade\Image\Utils;
 
-use Lemonade\Image\Exceptions\IOException;
-use Lemonade\Image\Exceptions\InvalidStateException;
-
 use FilesystemIterator;
+use Lemonade\Image\Exceptions\Filesystem\DirectoryCreateException;
+use Lemonade\Image\Exceptions\Filesystem\FileCopyException;
+use Lemonade\Image\Exceptions\Filesystem\FileDeleteException;
+use Lemonade\Image\Exceptions\Filesystem\FileLockException;
+use Lemonade\Image\Exceptions\Filesystem\FileNotFoundException;
+use Lemonade\Image\Exceptions\Filesystem\FileOpenException;
+use Lemonade\Image\Exceptions\Filesystem\FilePermissionException;
+use Lemonade\Image\Exceptions\Filesystem\FileReadException;
+use Lemonade\Image\Exceptions\Filesystem\FileRenameException;
+use Lemonade\Image\Exceptions\Filesystem\FileWriteException;
+use Lemonade\Image\Exceptions\InvalidStateException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
@@ -34,7 +44,6 @@ use SplFileInfo;
  * @license     MIT
  * @link        https://lemonadeframework.cz
  * @author      Honza Mudrak <honzamudrak@gmail.com>
- * @license     MIT
  * @since       1.0.0
  */
 final class FileSystem
@@ -42,14 +51,19 @@ final class FileSystem
     public function createDir(string $dir, int $mode = 0777): void
     {
         if (!is_dir($dir) && !@mkdir($dir, $mode, true) && !is_dir($dir)) {
-            throw new IOException("Unable to create directory '$dir'. " . $this->getLastError());
+            throw DirectoryCreateException::forPath($dir, $this->getLastError());
         }
+    }
+
+    public function createDirForFile(string $file, int $mode = 0777): void
+    {
+        $this->createDir(dirname($file), $mode);
     }
 
     public function copy(string $source, string $dest, bool $overwrite = true): void
     {
         if (stream_is_local($source) && !file_exists($source)) {
-            throw new IOException("File or directory '$source' not found.");
+            throw FileNotFoundException::forPath($source);
         }
 
         if (!$overwrite && file_exists($dest)) {
@@ -59,16 +73,14 @@ final class FileSystem
         if (is_dir($source)) {
             $this->createDir($dest);
 
-            // vyčistit cílový adresář
             foreach ($this->iterateDirectory($dest) as $item) {
                 $this->delete($item->getPathname());
             }
 
-            // rekurzivní kopie (bez závislosti na iteratoru)
             $base = rtrim($source, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
             foreach ($this->iterateRecursive($source) as $item) {
-                if ($item->isLink()) { // ignore symlinks
+                if ($item->isLink()) {
                     continue;
                 }
 
@@ -93,7 +105,8 @@ final class FileSystem
         if (stream_copy_to_stream($in, $out) === false) {
             fclose($in);
             fclose($out);
-            throw new IOException("Unable to copy file '$source' to '$dest'. " . $this->getLastError());
+
+            throw FileCopyException::fromTo($source, $dest, $this->getLastError());
         }
 
         fclose($in);
@@ -102,13 +115,10 @@ final class FileSystem
 
     public function delete(string $path): void
     {
-        // 1. Soubory a symlinky (včetně symlinků na adresáře)
         if (is_link($path) || is_file($path)) {
-
             $result = false;
 
             if (DIRECTORY_SEPARATOR === '\\' && is_dir($path)) {
-                // Windows: symlink na adresář
                 $result = @rmdir($path);
             } else {
                 $result = @unlink($path);
@@ -118,14 +128,13 @@ final class FileSystem
                 clearstatcache(true, $path);
 
                 if (file_exists($path)) {
-                    throw new IOException("Unable to delete '$path'. " . $this->getLastError());
+                    throw FileDeleteException::forPath($path, $this->getLastError());
                 }
             }
 
             return;
         }
 
-        // 2. Skutečné adresáře
         if (is_dir($path)) {
             foreach ($this->iterateDirectory($path) as $item) {
                 $this->delete($item->getPathname());
@@ -135,7 +144,7 @@ final class FileSystem
                 clearstatcache(true, $path);
 
                 if (is_dir($path)) {
-                    throw new IOException("Unable to delete directory '$path'. " . $this->getLastError());
+                    throw FileDeleteException::forPath($path, $this->getLastError());
                 }
             }
         }
@@ -148,7 +157,7 @@ final class FileSystem
         }
 
         if (!file_exists($name)) {
-            throw new IOException("File or directory '$name' not found.");
+            throw FileNotFoundException::forPath($name);
         }
 
         $this->createDir(dirname($newName));
@@ -158,7 +167,7 @@ final class FileSystem
         }
 
         if (!@rename($name, $newName)) {
-            throw new IOException("Unable to rename '$name' to '$newName'. " . $this->getLastError());
+            throw FileRenameException::fromTo($name, $newName, $this->getLastError());
         }
     }
 
@@ -168,7 +177,8 @@ final class FileSystem
 
         if (!flock($handle, LOCK_SH)) {
             fclose($handle);
-            throw new IOException("Unable to acquire shared lock for file '$file'.");
+
+            throw FileLockException::forPath($file);
         }
 
         try {
@@ -178,14 +188,13 @@ final class FileSystem
                 $chunk = fread($handle, 8192);
 
                 if ($chunk === false) {
-                    throw new IOException("Unable to read file '$file'. " . $this->getLastError());
+                    throw FileReadException::forPath($file, $this->getLastError());
                 }
 
                 $content .= $chunk;
             }
 
             return $content;
-
         } finally {
             flock($handle, LOCK_UN);
             fclose($handle);
@@ -211,7 +220,8 @@ final class FileSystem
             if ($result === false) {
                 fclose($handle);
                 @unlink($tmpFile);
-                throw new IOException("Unable to write to file '$file'. " . $this->getLastError());
+
+                throw FileWriteException::forPath($file, $this->getLastError());
             }
 
             $written += $result;
@@ -222,17 +232,16 @@ final class FileSystem
 
         if ($mode !== null && !@chmod($tmpFile, $mode)) {
             @unlink($tmpFile);
-            throw new IOException("Unable to chmod file '$file'. " . $this->getLastError());
+
+            throw FilePermissionException::forPath($tmpFile, 'chmod', $this->getLastError());
         }
 
-        // retry rename (řeší locky / NFS / Windows)
         $attempts = 3;
 
         while ($attempts-- > 0) {
             if (@rename($tmpFile, $file)) {
-
                 if ($mode !== null && !@chmod($file, $mode)) {
-                    throw new IOException("Unable to chmod file '$file'. " . $this->getLastError());
+                    throw FilePermissionException::forPath($file, 'chmod', $this->getLastError());
                 }
 
                 return;
@@ -243,7 +252,7 @@ final class FileSystem
 
         @unlink($tmpFile);
 
-        throw new IOException("Unable to move temp file to '$file'. " . $this->getLastError());
+        throw FileRenameException::fromTo($tmpFile, $file, $this->getLastError());
     }
 
     public function isAbsolute(string $path): bool
@@ -276,7 +285,7 @@ final class FileSystem
         $handle = fopen($file, $mode);
 
         if ($handle === false) {
-            throw new IOException("Unable to open file '$file'. " . $this->getLastError());
+            throw FileOpenException::forPath($file, $mode, $this->getLastError());
         }
 
         return $handle;
@@ -309,8 +318,8 @@ final class FileSystem
             RecursiveIteratorIterator::SELF_FIRST
         );
 
-        /** @var SplFileInfo $item */
         foreach ($iterator as $item) {
+            /** @var SplFileInfo $item */
             yield $item;
         }
     }

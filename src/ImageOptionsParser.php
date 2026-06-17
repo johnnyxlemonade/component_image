@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Lemonade\Image;
 
@@ -9,6 +11,8 @@ use function in_array;
 use function ctype_digit;
 use function ctype_xdigit;
 use function json_encode;
+use function preg_match;
+use function sprintf;
 use function md5;
 
 /**
@@ -97,12 +101,13 @@ final class ImageOptionsParser
      */
     private function parse(?string $args): void
     {
-        if ((string) $args === '') {
+        $args = (string) $args;
+
+        if ($args === '') {
             return;
         }
 
         foreach (explode('-', $args) as $item) {
-
             if ($this->parsePreset($item)) {
                 continue;
             }
@@ -126,12 +131,12 @@ final class ImageOptionsParser
     private function parsePreset(string $item): bool
     {
         // md, md2, md3
-        if (!preg_match('~^([a-z]+)(\d+)?$~', $item, $m)) {
+        if (preg_match('~^([a-z]+)(\d+)?$~', $item, $m) !== 1) {
             return false;
         }
 
         $preset = $m[1];
-        $scale  = isset($m[2]) ? (int) $m[2] : 1;
+        $scale = isset($m[2]) ? (int) $m[2] : 1;
 
         if (
             !isset(self::SIZE_PRESETS[$preset]) ||
@@ -143,7 +148,7 @@ final class ImageOptionsParser
 
         [$w, $h] = self::SIZE_PRESETS[$preset];
 
-        $this->width  = $w * $scale;
+        $this->width = $w * $scale;
         $this->height = $h * $scale;
 
         return true;
@@ -284,13 +289,32 @@ final class ImageOptionsParser
 
     public function getHash(): string
     {
-        return md5(json_encode([
+        $json = json_encode([
             'w' => $this->width,
             'h' => $this->height,
             'c' => $this->canvas,
             'e' => $this->missing,
             'z' => $this->crop,
             'q' => $this->quality,
-        ]));
+        ]);
+
+        if ($json !== false) {
+            return md5($json);
+        }
+
+        return md5($this->buildFallbackHashPayload());
+    }
+
+    private function buildFallbackHashPayload(): string
+    {
+        return sprintf(
+            'w:%s|h:%s|c:%s|e:%s|z:%d|q:%d',
+            $this->width === null ? 'null' : (string) $this->width,
+            $this->height === null ? 'null' : (string) $this->height,
+            $this->canvas,
+            $this->missing ? '1' : '0',
+            $this->crop,
+            $this->quality
+        );
     }
 }
