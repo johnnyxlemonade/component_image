@@ -15,4 +15,9 @@ final class ImageRenderException extends ImageProcessingException
     {
         return new self('Unable to capture output buffer.');
     }
+
+    public static function paletteToTrueColorFailed(string $reason = ''): self
+    {
+        return new self('Unable to convert palette image to true color.' . ($reason !== '' ? ' ' . $reason : ''));
+    }
 }

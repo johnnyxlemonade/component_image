@@ -6,11 +6,64 @@ namespace Lemonade\Image;
 
 use Closure;
 use GdImage;
-use InvalidArgumentException;
+use Lemonade\Image\Exceptions\Gd\GdExtensionNotLoadedException;
+use Lemonade\Image\Exceptions\Gd\GdImageColorException;
+use Lemonade\Image\Exceptions\Gd\GdImageOutputException;
+use Lemonade\Image\Exceptions\Image\ImageCropException;
+use Lemonade\Image\Exceptions\Image\ImageRenderException;
+use Lemonade\Image\Exceptions\Image\ImageSourceException;
+use Lemonade\Image\Exceptions\Image\ImageTypeException;
+use Lemonade\Image\Exceptions\InvalidArgumentException;
 use Lemonade\Image\Utils\GdImageOperations;
 use LogicException;
-use RuntimeException;
 use Throwable;
+
+use function abs;
+use function array_flip;
+use function bin2hex;
+use function dirname;
+use function error_get_last;
+use function extension_loaded;
+use function function_exists;
+use function gd_info;
+use function getimagesize;
+use function getimagesizefromstring;
+use function getmypid;
+use function header;
+use function imagecolorat;
+use function imageconvolution;
+use function imagecrop;
+use function imageflip;
+use function imageistruecolor;
+use function imagepalettetotruecolor;
+use function imagesetpixel;
+use function imagesx;
+use function imagesy;
+use function in_array;
+use function is_array;
+use function is_dir;
+use function is_file;
+use function is_int;
+use function is_numeric;
+use function is_string;
+use function max;
+use function min;
+use function mkdir;
+use function ob_end_clean;
+use function ob_get_clean;
+use function ob_get_level;
+use function ob_start;
+use function pathinfo;
+use function random_bytes;
+use function rename;
+use function round;
+use function sprintf;
+use function str_ends_with;
+use function strtolower;
+use function substr;
+use function unlink;
+
+use const PATHINFO_EXTENSION;
 
 /**
  * Basic manipulation with images. Supported types are JPEG, PNG, GIF, WEBP.
@@ -66,11 +119,9 @@ final class AppGenerator
         $type ??= self::detectTypeFromFile($file);
 
         if ($type === null) {
-            throw new RuntimeException(
-                is_file($file)
-                    ? "Unknown type of file '$file'."
-                    : "File '$file' not found."
-            );
+            throw is_file($file)
+                ? ImageTypeException::unknownFile($file)
+                : ImageSourceException::fileNotFound($file);
         }
 
         return new self(GdImageOperations::createFromFile($file, $type));
@@ -83,7 +134,7 @@ final class AppGenerator
         $type ??= self::detectTypeFromString($s);
 
         if ($type === null) {
-            throw new RuntimeException('Unknown type of image.');
+            throw ImageTypeException::unknownString();
         }
 
         return new self(GdImageOperations::createFromString($s));
@@ -154,7 +205,7 @@ final class AppGenerator
     public static function typeToExtension(int $type): string
     {
         if (!isset(self::FORMATS[$type])) {
-            throw new InvalidArgumentException("Unsupported image type '$type'.");
+            throw ImageTypeException::unsupported($type);
         }
 
         return self::FORMATS[$type];
@@ -371,7 +422,7 @@ final class AppGenerator
             ]);
 
             if (!$cropped instanceof GdImage) {
-                throw new RuntimeException('Unable to crop image. ' . self::getLastError());
+                throw ImageCropException::failed(self::getLastError());
             }
 
             $this->image = $cropped;
@@ -493,9 +544,16 @@ final class AppGenerator
             for ($px = 0; $px < $width; $px++) {
                 for ($py = 0; $py < $height; $py++) {
                     $color = imagecolorat($input, $px, $py);
+
+                    if ($color === false) {
+                        throw GdImageColorException::resolve(self::getLastError());
+                    }
+
                     $color = ($color & 0xFFFFFF) + ($table[$color >> 24] << 24);
 
-                    imagesetpixel($output, $px, $py, $color);
+                    if (!imagesetpixel($output, $px, $py, $color)) {
+                        throw GdImageColorException::fill(self::getLastError());
+                    }
                 }
             }
 
@@ -514,7 +572,7 @@ final class AppGenerator
             $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
             if (!isset($extensions[$ext])) {
-                throw new InvalidArgumentException("Unsupported file extension '$ext'.");
+                throw ImageTypeException::unsupportedExtension($ext);
             }
 
             $type = $extensions[$ext];
@@ -549,7 +607,7 @@ final class AppGenerator
     public function paletteToTrueColor(): void
     {
         if (!imagepalettetotruecolor($this->image)) {
-            throw new RuntimeException('Unable to convert palette image to true color. ' . self::getLastError());
+            throw ImageRenderException::paletteToTrueColorFailed(self::getLastError());
         }
     }
 
@@ -607,7 +665,7 @@ final class AppGenerator
             self::PNG => GdImageOperations::outputPng($this->image, $file, $quality ?? 9),
             self::GIF => GdImageOperations::outputGif($this->image, $file),
             self::WEBP => GdImageOperations::outputWebp($this->image, $file, $quality ?? 80),
-            default => throw new InvalidArgumentException("Unsupported image type '$type'."),
+            default => throw ImageTypeException::unsupported($type),
         };
 
         if (!$success) {
@@ -634,12 +692,15 @@ final class AppGenerator
 
             $lastError = self::getLastError();
 
-            throw new RuntimeException($lastError !== '' ? $lastError : 'Image output failed.');
+            throw GdImageOutputException::output(
+                $lastError !== '' ? $lastError : 'Image output failed.'
+            );
         }
 
         if ($tmpFile !== null) {
             if (is_file($targetFile)) {
                 @unlink($tmpFile);
+
                 return;
             }
 
@@ -714,6 +775,8 @@ final class AppGenerator
 
     /**
      * Prevents serialization.
+     *
+     * @return list<string>
      */
     public function __sleep(): array
     {
@@ -862,7 +925,7 @@ final class AppGenerator
             $content = ob_get_clean();
 
             if ($content === false) {
-                throw new RuntimeException('Unable to capture output buffer.');
+                throw ImageRenderException::outputBufferFailed();
             }
 
             return $content;
@@ -878,7 +941,7 @@ final class AppGenerator
     private static function assertGdLoaded(): void
     {
         if (!extension_loaded('gd')) {
-            throw new LogicException('PHP extension GD is not loaded.');
+            throw GdExtensionNotLoadedException::create();
         }
     }
 
