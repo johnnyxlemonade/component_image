@@ -6,7 +6,6 @@ namespace Lemonade\Image;
 
 use DateTimeImmutable;
 use Lemonade\Image\Exceptions\Image\ImageRenderException;
-use Lemonade\Image\Providers\ServerHeaderProvider;
 
 use function strlen;
 use function strtotime;
@@ -83,11 +82,11 @@ final class ImageResponseEmitter
             ? self::MIME_TYPES[$type]
             : null;
 
-        ServerHeaderProvider::setContentType($mime);
-        ServerHeaderProvider::setCacheHeaders($lifetime, $expiresAt);
+        HttpResponseHeaders::setContentType($mime);
+        HttpResponseHeaders::setCacheHeaders($lifetime, $expiresAt);
 
         if ($size > 0) {
-            ServerHeaderProvider::setContentLength($size);
+            HttpResponseHeaders::setContentLength($size);
         }
 
         $ifModifiedSince = ServerRequest::get('HTTP_IF_MODIFIED_SINCE');
@@ -105,16 +104,16 @@ final class ImageResponseEmitter
         );
 
         if ($clientTime > ($serverTime - $lifetime)) {
-            ServerHeaderProvider::setLastModified($clientTime, 304);
+            HttpResponseHeaders::setLastModified($clientTime, 304);
 
             return;
         }
 
-        ServerHeaderProvider::setLastModified($serverTime, 200);
+        HttpResponseHeaders::setLastModified($serverTime, 200);
     }
 
     public function sendNotModified(): void
     {
-        ServerHeaderProvider::setNotModified();
+        HttpResponseHeaders::setNotModified();
     }
 }
