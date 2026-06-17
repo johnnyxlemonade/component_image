@@ -12,6 +12,7 @@ use Lemonade\Image\Exceptions\Image\ImageRenderException;
 use Lemonade\Image\Exceptions\Image\ImageSourceException;
 use Lemonade\Image\Exceptions\Image\ImageTypeException;
 use Lemonade\Image\ImageOptionsDTO;
+use Lemonade\Image\ImageResult;
 
 use function file_exists;
 use function imagecolorallocatealpha;
@@ -68,7 +69,7 @@ final class ImageProvider
     /**
      * Main image processing entrypoint.
      */
-    public static function imageCreate(FileProvider $app): void
+    public static function imageCreate(FileProvider $app): ImageResult
     {
         $opt = $app->getData()->getDTO();
 
@@ -79,13 +80,18 @@ final class ImageProvider
         $quality = $opt->getQuality();
 
         self::saveCache($app, $img, $quality, $imgExt);
-        self::outputImage($img, $imgExt, $quality);
+
+        return new ImageResult(
+            image: $img,
+            type: $imgExt,
+            quality: $quality,
+        );
     }
 
     /**
      * Generates or loads fallback error image.
      */
-    public static function imageError(FileProvider $app): void
+    public static function imageError(FileProvider $app): ImageResult
     {
         $opt = $app->getData()->getDTO();
 
@@ -94,8 +100,15 @@ final class ImageProvider
             ? AppGenerator::WEBP
             : AppGenerator::PNG;
 
-        self::saveErrorCache($app, $image, $opt->getQuality(), $imgExt);
-        self::outputImage($image, $imgExt, $opt->getQuality());
+        $quality = $opt->getQuality();
+
+        self::saveErrorCache($app, $image, $quality, $imgExt);
+
+        return new ImageResult(
+            image: $image,
+            type: $imgExt,
+            quality: $quality,
+        );
     }
 
     /**

@@ -33,12 +33,14 @@ final class ImageApplication
             }
 
             if ($provider->isFileExists($provider->getFileFs())) {
-                ImageProvider::imageCreate($provider);
-                return;
+                $result = ImageProvider::imageCreate($provider);
+                $this->responseEmitter->sendResult($result);
             }
 
             $this->cacheStorage->deleteCache($this->context);
-            ImageProvider::imageError($provider);
+
+            $result = ImageProvider::imageError($provider);
+            $this->responseEmitter->sendResult($result);
         } catch (Throwable) {
             $this->sendFallbackImage();
         }
@@ -54,6 +56,7 @@ final class ImageApplication
             $data->setHeight(600);
         }
 
-        ImageProvider::imageError($provider);
+        $result = ImageProvider::imageError($provider);
+        $this->responseEmitter->sendResult($result);
     }
 }

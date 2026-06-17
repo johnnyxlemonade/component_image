@@ -32,6 +32,15 @@ final class ImageResponseEmitter
         AppGenerator::WEBP => 'image/webp',
     ];
 
+    public function sendResult(ImageResult $result): never
+    {
+        $this->sendImage(
+            image: $result->getImage(),
+            type: $result->getType(),
+            quality: $result->getQuality(),
+        );
+    }
+
     public function sendImage(
         AppGenerator $image,
         int $type,
