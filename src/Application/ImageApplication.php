@@ -30,44 +30,48 @@ final class ImageApplication
     {
         $file = $this->context->getFile();
 
-        try {
-            if ($this->cacheResponder->sendBrowserCacheIfFresh(
-                file: $file,
-            )) {
-                return;
-            }
+        if ($this->cacheResponder->sendBrowserCacheIfFresh(
+            file: $file,
+        )) {
+            return;
+        }
 
-            if ($this->cacheResponder->sendCacheImageIfExists(
-                file: $file,
-            )) {
-                return;
-            }
+        if ($this->cacheResponder->sendCacheImageIfExists(
+            file: $file,
+        )) {
+            return;
+        }
 
-            if ($this->fileInspector->exists(
-                file: $file->getSourceFile(),
-            )) {
-                $result = $this->generator->createVariant(
-                    file: $file,
-                );
-
-                $this->cacheStorage->saveVariant(
-                    context: $this->context,
-                    result: $result,
-                );
-
-                $this->responseEmitter->sendResult(
-                    result: $result,
-                );
-            }
-
+        if (!$this->fileInspector->exists(
+            file: $file->getSourceFile(),
+        )) {
             $this->cacheStorage->deleteCache(
                 context: $this->context,
             );
 
             $this->createAndSendFallback();
+
+            return;
+        }
+
+        try {
+            $result = $this->generator->createVariant(
+                file: $file,
+            );
         } catch (Throwable) {
             $this->createAndSendFallback();
+
+            return;
         }
+
+        $this->cacheStorage->saveVariant(
+            context: $this->context,
+            result: $result,
+        );
+
+        $this->responseEmitter->sendResult(
+            result: $result,
+        );
     }
 
     private function createAndSendFallback(): void
@@ -92,4 +96,5 @@ final class ImageApplication
             result: $result,
         );
     }
+
 }

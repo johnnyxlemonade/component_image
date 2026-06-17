@@ -9,6 +9,7 @@ use Lemonade\Image\Detection\WebpSupportDetector;
 use Lemonade\Image\Exceptions\IOException;
 use Lemonade\Image\Generator\AppGenerator;
 use Lemonade\Image\ImageResult;
+use Throwable;
 
 /**
  * Handles filesystem operations related to generated image cache files.
@@ -22,7 +23,7 @@ final class ImageCacheStorage
                 file: $file,
             );
         } catch (IOException) {
-            // silent by design
+            // Cache directory creation failure must not prevent image response.
         }
     }
 
@@ -33,11 +34,35 @@ final class ImageCacheStorage
                 path: $context->getDirectory()->getCache(),
             );
         } catch (IOException) {
-            // silent by design
+            // Cache cleanup failure must not prevent image response.
         }
     }
 
     public function saveVariant(ImageContext $context, ImageResult $result): void
+    {
+        try {
+            $this->doSaveVariant(
+                context: $context,
+                result: $result,
+            );
+        } catch (Throwable) {
+            // Cache write failure must not prevent image response.
+        }
+    }
+
+    public function saveFallback(ImageContext $context, ImageResult $result): void
+    {
+        try {
+            $this->doSaveFallback(
+                context: $context,
+                result: $result,
+            );
+        } catch (Throwable) {
+            // Fallback cache write failure must not prevent fallback response.
+        }
+    }
+
+    private function doSaveVariant(ImageContext $context, ImageResult $result): void
     {
         $cacheFile = $context->getCacheFile();
         $cacheWebp = $context->getCacheWebp();
@@ -74,7 +99,7 @@ final class ImageCacheStorage
         );
     }
 
-    public function saveFallback(ImageContext $context, ImageResult $result): void
+    private function doSaveFallback(ImageContext $context, ImageResult $result): void
     {
         $png = $context->getFallbackPng();
         $webp = $context->getFallbackWebp();
