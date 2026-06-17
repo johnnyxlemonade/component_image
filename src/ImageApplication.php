@@ -34,19 +34,18 @@ final class ImageApplication
 
             if ($provider->isFileExists($provider->getFileFs())) {
                 $result = $this->generator->createVariant($provider);
+                $this->cacheStorage->saveVariant($this->context, $result);
                 $this->responseEmitter->sendResult($result);
             }
 
             $this->cacheStorage->deleteCache($this->context);
-
-            $result = $this->generator->createFallback($provider);
-            $this->responseEmitter->sendResult($result);
+            $this->createAndSendFallback();
         } catch (Throwable) {
-            $this->sendFallbackImage();
+            $this->createAndSendFallback();
         }
     }
 
-    private function sendFallbackImage(): void
+    private function createAndSendFallback(): void
     {
         $provider = $this->context->getFileProvider();
         $data = $provider->getData();
@@ -57,6 +56,7 @@ final class ImageApplication
         }
 
         $result = $this->generator->createFallback($provider);
+        $this->cacheStorage->saveFallback($this->context, $result);
         $this->responseEmitter->sendResult($result);
     }
 }
