@@ -30,7 +30,14 @@ final class AppImageFactory
     public function createApplication(ImageRequest $request): ImageApplication
     {
         return new ImageApplication(
-            provider: $this->createFileProvider($request),
+            context: $this->createContext($request),
+        );
+    }
+
+    private function createContext(ImageRequest $request): ImageContext
+    {
+        return new ImageContext(
+            fileProvider: $this->createFileProvider($request),
         );
     }
 

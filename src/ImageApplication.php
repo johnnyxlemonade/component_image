@@ -4,43 +4,38 @@ declare(strict_types=1);
 
 namespace Lemonade\Image;
 
-use Lemonade\Image\Providers\FileProvider;
 use Lemonade\Image\Providers\ImageProvider;
 use Throwable;
 
 /**
  * Handles one image request.
- *
- * This is the application-level workflow:
- * - browser cache shortcut
- * - generated cache shortcut
- * - source image generation
- * - fallback image generation
  */
 final class ImageApplication
 {
     public function __construct(
-        private readonly FileProvider $provider,
+        private readonly ImageContext $context,
     ) {}
 
     public function run(): void
     {
+        $provider = $this->context->getFileProvider();
+
         try {
-            if ($this->provider->sendBrowserImage()) {
+            if ($provider->sendBrowserImage()) {
                 return;
             }
 
-            if ($this->provider->sendCacheImage()) {
+            if ($provider->sendCacheImage()) {
                 return;
             }
 
-            if ($this->provider->isFileExists($this->provider->getFileFs())) {
-                ImageProvider::imageCreate($this->provider);
+            if ($provider->isFileExists($provider->getFileFs())) {
+                ImageProvider::imageCreate($provider);
                 return;
             }
 
-            $this->provider->deleteCache();
-            ImageProvider::imageError($this->provider);
+            $provider->deleteCache();
+            ImageProvider::imageError($provider);
         } catch (Throwable) {
             $this->sendFallbackImage();
         }
@@ -48,13 +43,14 @@ final class ImageApplication
 
     private function sendFallbackImage(): void
     {
-        $data = $this->provider->getData();
+        $provider = $this->context->getFileProvider();
+        $data = $provider->getData();
 
         if ($data->isMissingAllSize()) {
             $data->setWidth(600);
             $data->setHeight(600);
         }
 
-        ImageProvider::imageError($this->provider);
+        ImageProvider::imageError($provider);
     }
 }
