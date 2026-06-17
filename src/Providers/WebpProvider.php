@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace Lemonade\Image\Providers;
 
 /**
- * WebpProvider
+ * Detects WEBP support and controls WEBP response behavior.
  *
- * Detekuje podporu WebP na straně klienta podle hlaviček prohlížeče.
- *
- * @package     Lemonade Framework
+ * @package     Lemonade
  * @subpackage  Image\Providers
- * @category    Image
+ * @category    Provider
  * @link        https://lemonadeframework.cz
  * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
@@ -19,13 +17,6 @@ namespace Lemonade\Image\Providers;
  */
 final class WebpProvider
 {
-    /**
-     * Zjistí podporu WebP na straně klienta.
-     *
-     * Podmínky:
-     * - HTTP_ACCEPT obsahuje "image/webp"
-     * - nebo User-Agent obsahuje " Chrome/"
-     */
     public static function hasSupport(): bool
     {
         $accept = ServerProvider::get('HTTP_ACCEPT');

@@ -16,19 +16,11 @@ use const DIRECTORY_SEPARATOR;
 use const STR_PAD_LEFT;
 
 /**
- * DirectoryProvider
+ * Resolves storage and cache directories for generated image files.
  *
- * Provider zodpovědný za sestavení adresářové struktury
- * pro originální soubory a cache varianty obrázků.
- *
- * Řeší:
- * - mapování storage typu na adresář
- * - generování hierarchické struktury podle ID
- * - oddělení storage a cache stromu
- *
- * @package     Lemonade Framework
+ * @package     Lemonade
  * @subpackage  Image\Providers
- * @category    Providers
+ * @category    Provider
  * @link        https://lemonadeframework.cz
  * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT

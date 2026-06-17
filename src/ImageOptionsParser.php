@@ -16,35 +16,20 @@ use function sprintf;
 use function md5;
 
 /**
- * ImageOptionsParser
+ * Parses compact image option strings into normalized transformation settings.
  *
- * Parser a normalizační vrstva pro parametry obrázků přicházející z URL.
- * Odpovídá za dekódování řetězce ve formátu:
+ * Converts URL argument fragments into resize dimensions, crop mode, canvas
+ * color, fallback mode and output quality.
  *
- *     w600-h400-z1-cfff-e1
- *
- * a převod na plně validovaná a omezena data (min/max limity).
- *
- * Klíčové vlastnosti:
- * - Rozpoznání šířky/výšky (`w`,`h`) a fallback na minimální rozměry
- * - Validace kvality, barvy plátna, crop módu a „missing“ příznaku
- * - Ochrana proti extrémním hodnotám pomocí `minWidth/minHeight/maxWidth/maxHeight`
- * - Produkuje immutable objekt `ImageOptionsDTO`, který je jediným zdrojem pravdy
- *   pro generátor obrázků (`ImageProvider`)
- *
- * Parser neprovádí žádné výpočty rozměrů ani resize — pouze připravuje
- * konzistentní parametry pro interní generátor.
- *
- * @package     Lemonade Framework
+ * @package     Lemonade
  * @subpackage  Image
  * @category    Parser
  * @link        https://lemonadeframework.cz
  * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
  * @since       1.0.0
- * @see         ImageOptionsDTO
- * @see         ImageProvider
- * @see         AppImage
+ *
+ * @see ImageOptionsDTO
  */
 final class ImageOptionsParser
 {

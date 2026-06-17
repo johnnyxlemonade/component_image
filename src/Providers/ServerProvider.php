@@ -5,17 +5,11 @@ declare(strict_types=1);
 namespace Lemonade\Image\Providers;
 
 /**
- * ServerProvider
+ * Provides safe access to server request variables.
  *
- * Bezpečná vrstva pro přístup k proměnným $_SERVER.
- * Garantuje:
- * - návrat vždy stringu
- * - typová čistota
- * - centrální místo pro validaci vstupů ze serveru
- *
- * @package     Lemonade Framework
+ * @package     Lemonade
  * @subpackage  Image\Providers
- * @category    Environment
+ * @category    Provider
  * @link        https://lemonadeframework.cz
  * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
@@ -23,18 +17,12 @@ namespace Lemonade\Image\Providers;
  */
 final class ServerProvider
 {
-    /**
-     * Vrátí hodnotu ze $_SERVER jako string (neexistující → default).
-     */
     public static function get(string $key, string $default = ''): string
     {
         $value = $_SERVER[$key] ?? $default;
         return is_string($value) ? $value : $default;
     }
 
-    /**
-     * Zjistí, zda existuje neprázdná stringová hodnota v $_SERVER.
-     */
     public static function has(string $key): bool
     {
         return isset($_SERVER[$key])

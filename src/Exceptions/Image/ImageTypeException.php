@@ -6,6 +6,17 @@ namespace Lemonade\Image\Exceptions\Image;
 
 use function sprintf;
 
+/**
+ * Thrown when an image type, MIME type or file extension is unsupported.
+ *
+ * @package     Lemonade
+ * @subpackage  Image\Exceptions\Image
+ * @category    Exception
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
+ */
 final class ImageTypeException extends ImageProcessingException
 {
     public static function unknownFile(string $file): self

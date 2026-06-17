@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Lemonade\Image;
 
@@ -10,39 +12,23 @@ use Lemonade\Image\Utils\FileSystem;
 use Throwable;
 
 /**
- * AppImage
+ * Main facade for handling a single image request.
  *
- * Hlavní vstupní třída pro generování obrázků v Lemonade Frameworku.
- * Řeší kompletní pipeline zpracování:
+ * Coordinates option parsing, directory resolution, file path resolution
+ * and final image generation through the provider layer.
  *
- * - načtení požadavku (rozměry, crop, kvalita, canvas) přes `DataProvider`
- * - sestavení kontextu (adresář, cesta k souboru, argumenty, cache)
- * - řízení toku: 304 Not Modified → cache → originál → fallback error image
- * - bezpečné generování výstupu přes `ImageProvider`
- *
- * Funkce třídy:
- * - jednotný entry-point pro všechny obrázkové endpointy (factoryApp)
- * - konzistentní práce s provider vrstvou (DirectoryProvider, FileProvider, DataProvider)
- * - fallback logika pro chybějící soubory a definované rozměry
- * - automatická invalidace cache pokud originál neexistuje
- *
- * Třída sama negeneruje obrázky – pouze řídí tok, správně vybere, kdy:
- * - vrátit `304 Not Modified`
- * - obsloužit již existující cache
- * - vytvořit nový render
- * - vygenerovat error placeholder
- *
- * @package     Lemonade Framework
+ * @package     Lemonade
  * @subpackage  Image
- * @category    Core
+ * @category    Facade
  * @link        https://lemonadeframework.cz
  * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
  * @since       1.0.0
- * @see         ImageProvider
- * @see         FileProvider
- * @see         DataProvider
- * @see         DirectoryProvider
+ *
+ * @see ImageProvider
+ * @see FileProvider
+ * @see DirectoryProvider
+ * @see DataProvider
  */
 final class AppImage
 {

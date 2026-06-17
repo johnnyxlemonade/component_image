@@ -8,33 +8,18 @@ use Lemonade\Image\ImageOptionsParser;
 use Lemonade\Image\ImageOptionsDTO;
 
 /**
- * DataProvider
+ * Holds parsed image options and exposes them as a DTO.
  *
- * Lehká přístupová vrstva nad parametry obrázku předanými v URL.
- * Interně využívá `ImageOptionsParser` pro dekódování argumentů
- * a uchovává immutable `ImageOptionsDTO`, který slouží jako jediný
- * zdroj pravdy pro generování obrázků.
- *
- * Klíčové vlastnosti:
- * - Zajišťuje bezpečný přístup ke všem normalizovaným hodnotám
- * - Poskytuje setter metody, které nevytvářejí mutaci, ale novou
- *   instanci DTO (immutable princip)
- * - Slouží jako datová vrstva pro `FileProvider` a `ImageProvider`
- * - Garantuje konzistenci všech hodnot již po parsování
- *
- * `DataProvider` neprovádí žádné výpočty ani transformace obrázků —
- * jeho úloha je pouze předat správně normalizovaná data generátoru.
- *
- * @package     Lemonade Framework
- * @subpackage  Image
+ * @package     Lemonade
+ * @subpackage  Image\Providers
  * @category    Provider
  * @link        https://lemonadeframework.cz
  * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
  * @since       1.0.0
- * @see         ImageOptionsParser
- * @see         ImageOptionsDTO
- * @see         FileProvider
+ *
+ * @see ImageOptionsDTO
+ * @see ImageOptionsParser
  */
 final class DataProvider
 {

@@ -21,29 +21,16 @@ use RecursiveIteratorIterator;
 use SplFileInfo;
 
 /**
- * FileSystem
+ * Provides filesystem operations with component-specific exceptions.
  *
- * Lightweight filesystem utility for safe and consistent file operations.
+ * Wraps common file and directory actions used by the image cache layer.
  *
- * Provides:
- * - directory creation (recursive)
- * - file and directory copy (stream-based)
- * - delete (files, directories, symlinks, Windows-safe)
- * - rename / move
- * - read (stream + shared lock)
- * - write (atomic via temp file + rename)
- *
- * Guarantees:
- * - atomic writes (no partial files)
- * - basic race-condition handling
- * - consistent exception-based error handling
- *
- * @package     Lemonade Framework
- * @subpackage  Image
- * @category    Utils
- * @license     MIT
+ * @package     Lemonade
+ * @subpackage  Image\Utils
+ * @category    Utility
  * @link        https://lemonadeframework.cz
  * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
  * @since       1.0.0
  */
 final class FileSystem

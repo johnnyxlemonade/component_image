@@ -7,19 +7,12 @@ namespace Lemonade\Image\Providers;
 use Lemonade\Image\Interfaces\ToArrayInterface;
 
 /**
- * ColorProvider
+ * Converts color values into normalized RGB array structures.
  *
- * Value objekt reprezentující RGB barvu.
- * Slouží jako bezpečný mezikrok mezi vstupními hodnotami
- * (hex, čísla) a GD funkcemi.
- *
- * - zajišťuje rozsah 0–255
- * - neposkytuje žádnou logiku renderování
- * - slouží pouze jako datový kontejner
- *
- * @package     Lemonade Framework
+ * @package     Lemonade
  * @subpackage  Image\Providers
- * @category    Providers
+ * @category    Provider
+ * @link        https://lemonadeframework.cz
  * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
  * @since       1.0.0

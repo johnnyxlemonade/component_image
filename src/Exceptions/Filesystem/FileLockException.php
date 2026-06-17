@@ -8,6 +8,17 @@ use Lemonade\Image\Exceptions\IOException;
 
 use function sprintf;
 
+/**
+ * Thrown when an exclusive file lock cannot be acquired.
+ *
+ * @package     Lemonade
+ * @subpackage  Image\Exceptions\Filesystem
+ * @category    Exception
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
+ */
 final class FileLockException extends IOException
 {
     public static function forPath(string $path): self

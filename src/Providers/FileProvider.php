@@ -9,46 +9,22 @@ use Lemonade\Image\Exceptions\IOException;
 use Lemonade\Image\Utils\FileSystem;
 
 /**
- * FileProvider
+ * Resolves source, cache and fallback file paths for image processing.
  *
- * Provider zodpovědný za práci se soubory v image pipeline.
- * Řeší mapování:
+ * Coordinates filesystem checks, cache paths and browser cache shortcuts
+ * for a single image request.
  *
- * - originálního souboru (filesystem)
- * - cache variant (PNG / WebP)
- * - placeholder / error obrázků
- *
- * a jejich bezpečné odeslání klientovi.
- *
- * Zodpovědnosti:
- * - sestavení cest k originálu a cache na základě DirectoryProvider + DataProvider
- * - deterministický cache klíč (origin + args)
- * - rozhodování o výstupu (WebP vs originální formát)
- * - obsluha HTTP cache hlaviček (If-Modified-Since → 304)
- * - bezpečné čtení a odesílání cache souborů
- * - mazání cache při chybových stavech
- *
- * FileProvider:
- * - negeneruje obrázky
- * - neřeší transformace
- * - neřeší validaci vstupů
- *
- * Slouží výhradně jako „file & cache orchestrace“ mezi:
- * - DirectoryProvider (kde leží data)
- * - DataProvider (jaká varianta se chce)
- * - ImageProvider (kdo obrázek vytvoří / odešle)
- *
- * @package     Lemonade Framework
+ * @package     Lemonade
  * @subpackage  Image\Providers
- * @category    Providers
+ * @category    Provider
  * @link        https://lemonadeframework.cz
  * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
  * @since       1.0.0
- * @see         DirectoryProvider
- * @see         DataProvider
- * @see         ImageProvider
- * @see         WebpProvider
+ *
+ * @see DirectoryProvider
+ * @see DataProvider
+ * @see ImageProvider
  */
 final class FileProvider
 {

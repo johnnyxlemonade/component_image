@@ -5,29 +5,15 @@ declare(strict_types=1);
 namespace Lemonade\Image\Providers;
 
 /**
- * ServerHeaderProvider
+ * Sends HTTP headers used by image responses and cache handling.
  *
- * Pomocná třída pro centralizované a bezpečné nastavování HTTP hlaviček
- * v rámci Lemonade Image Component. Odděluje veškerou logiku kolem hlaviček
- * od samotného procesu generování obrázků (ImageProvider).
- *
- * Hlavní odpovědnosti:
- * - nastavení cache hlaviček (Expires, Cache-Control, Connection)
- * - nastavení Content-Type a Content-Length
- * - jednotné odesílání Last-Modified
- * - podpora 304 Not Modified pomocí vlastních metod
- * - přidává interní diagnostický header: "X-Component: Lemonade Image"
- *
- * Třída nepracuje přímo s výstupem obrázků – pouze formuje výstupní hlavičky.
- *
- * @package     Lemonade Framework
+ * @package     Lemonade
  * @subpackage  Image\Providers
- * @category    Server
+ * @category    Provider
  * @link        https://lemonadeframework.cz
  * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
  * @since       1.0.0
- * @see         ImageProvider, ServerProvider
  */
 final class ServerHeaderProvider
 {

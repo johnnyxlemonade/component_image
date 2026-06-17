@@ -66,7 +66,20 @@ use function unlink;
 use const PATHINFO_EXTENSION;
 
 /**
- * Basic manipulation with images. Supported types are JPEG, PNG, GIF, WEBP.
+ * Provides GD-based image manipulation and output generation.
+ *
+ * Supports loading, resizing, cropping, placing, rendering and saving images
+ * in JPEG, PNG, GIF and WEBP formats.
+ *
+ * @package     Lemonade
+ * @subpackage  Image
+ * @category    Image
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
+ *
+ * @see GdImageOperations
  *
  * @property-read int $width
  * @property-read int $height

@@ -10,35 +10,20 @@ use function md5;
 use const JSON_THROW_ON_ERROR;
 
 /**
- * ImageOptionsDTO
+ * Carries normalized image transformation options.
  *
- * Immutable objekt s finalní sadou parametrů pro generování obrázků.
- * Data v této třídě jsou již validovaná a normalizovaná parserem
- * (`ImageOptionsParser`) a používají se jako jediný zdroj pravdy pro:
- * - `ImageProvider` (výpočty resize/crop/canvas)
- * - `AppImage` řídicí logiku
- * - cache hashing (`getHash()`)
+ * Stores resize dimensions, crop mode, canvas color, fallback mode and output
+ * quality in an immutable request configuration object.
  *
- * Klíčové vlastnosti:
- * - immutable (pouze readonly + with* klonovací metody)
- * - ukládá šířku/výšku (null = nezadáno)
- * - crop mód (0–3)
- * - barvu pozadí (hex)
- * - kvalitu (1–100)
- * - příznak chybějícího souboru
- *
- * DTO neprovádí žádnou validaci ani logiku – pouze nese data.
- *
- * @package     Lemonade Framework
+ * @package     Lemonade
  * @subpackage  Image
  * @category    DTO
  * @link        https://lemonadeframework.cz
  * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
  * @since       1.0.0
- * @see         ImageOptionsParser
- * @see         ImageProvider
- * @see         AppImage
+ *
+ * @see ImageOptionsParser
  */
 final class ImageOptionsDTO
 {

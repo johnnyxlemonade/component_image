@@ -28,40 +28,23 @@ use function strtotime;
 use function time;
 
 /**
- * ImageProvider
+ * Coordinates image processing, cache generation and HTTP delivery.
  *
- * Centrální služba pro generování, zpracování a doručování obrázků
- * v rámci Lemonade Image Component. Zajišťuje kompletní životní cyklus:
- * - načtení zdrojového souboru
- * - aplikaci transformací (resize, crop, canvas)
- * - volbu správného výstupního formátu (PNG/WEBP/JPEG)
- * - zápis do cache
- * - odeslání do prohlížeče včetně všech HTTP hlaviček
+ * Loads source images, applies configured transformations, stores generated
+ * cache files and sends the final image response to the browser.
  *
- * Součástí je také fallback režim pro chybové obrázky, který generuje
- * placeholder na základě zadaných parametrů (rozměry, barva pozadí).
- *
- * Klíčové vlastnosti:
- * - Plná kompatibilita s původní implementací Lemonade Image
- * - Automatická detekce podpory WebP (WebpProvider::hasSupport)
- * - Transparentní HTTP cache (Expires, Last-Modified, 304 Not Modified)
- * - Jednotná práce s ImageOptionsDTO (šířka, výška, crop, canvas, kvalita)
- * - Oddělené ukládání PNG/WEBP verzí do cache
- *
- * Třída funguje jako hlavní rozhraní pro FileProvider
- * a je volána skrze AppImage::run().
- *
- * @package     Lemonade Framework
+ * @package     Lemonade
  * @subpackage  Image\Providers
- * @category    Image
+ * @category    Provider
  * @link        https://lemonadeframework.cz
  * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
  * @since       1.0.0
- * @see         AppImage
- * @see         FileProvider
- * @see         WebpProvider
- * @see         ImageOptionsDTO
+ *
+ * @see AppGenerator
+ * @see FileProvider
+ * @see ImageOptionsDTO
+ * @see WebpProvider
  */
 final class ImageProvider
 {

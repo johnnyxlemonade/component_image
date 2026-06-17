@@ -4,6 +4,17 @@ declare(strict_types=1);
 
 namespace Lemonade\Image\Exceptions\Gd;
 
+/**
+ * Thrown when GD color allocation, resolution or fill operations fail.
+ *
+ * @package     Lemonade
+ * @subpackage  Image\Exceptions\Gd
+ * @category    Exception
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
+ */
 final class GdImageColorException extends GdException
 {
     public static function allocate(string $reason = ''): self

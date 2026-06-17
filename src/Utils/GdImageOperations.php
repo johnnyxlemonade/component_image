@@ -33,6 +33,20 @@ use function imagewebp;
 use function max;
 use function min;
 
+/**
+ * Wraps low-level GD operations with strict return handling.
+ *
+ * Normalizes GD function results and converts failures into typed component
+ * exceptions.
+ *
+ * @package     Lemonade
+ * @subpackage  Image\Utils
+ * @category    Utility
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
+ */
 final class GdImageOperations
 {
     public static function createTrueColor(int $width, int $height): GdImage
