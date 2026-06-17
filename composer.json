@@ -56,6 +56,9 @@
     "post-autoload-dump": [
       "@php -r \"echo 'Autoload refreshed'.PHP_EOL;\""
     ],
+    "lint": [
+      "@php tools/lint.php"
+    ],
     "autoload:dev": [
       "@composer dump-autoload"
     ],
@@ -86,11 +89,13 @@
     "check": [
       "@composer:validate",
       "@check:platform",
+      "@lint",
       "@cs:check",
       "@stan"
     ]
   },
   "scripts-descriptions": {
+    "lint": "Run PHP syntax lint over source files.",
     "autoload:dev": "Regenerate Composer autoload files for development.",
     "autoload:optimize": "Regenerate optimized Composer autoload files.",
     "autoload:prod": "Regenerate optimized authoritative classmap for production.",
@@ -100,7 +105,7 @@
     "cs:check": "Check coding standards using PHP-CS-Fixer.",
     "cs:fix": "Fix coding standards using PHP-CS-Fixer.",
     "check:platform": "Check installed platform requirements.",
-    "check": "Run Composer validation, platform checks, coding standards and static analysis."
+    "check": "Run Composer validation, platform checks, syntax lint, coding standards and static analysis."
   },
   "support": {
     "email": "honzamudrak@gmail.com",

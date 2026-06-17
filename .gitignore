@@ -1,5 +1,21 @@
+# Composer dependencies
+# Installed by `composer install`, never committed.
 /vendor/
-/build/phpstan
+
+
+# Build artifacts and tool caches
+# PHPStan cache: build/phpstan/
+# PHP-CS-Fixer cache: build/php-cs-fixer/.php-cs-fixer.cache
+# Future reports/coverage can also live here.
+/build/
+
+
+# PHPUnit cache
+# Created by PHPUnit when tests are added later.
 /.phpunit.cache/
-/.php-cs-fixer.cache
+
+
+# Composer lock file
+# For reusable libraries/packages, composer.lock is usually not committed.
+# The consuming project decides exact dependency versions.
 /composer.lock
