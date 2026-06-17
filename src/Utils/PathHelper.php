@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Lemonade\Image\Utils;
 
 use function array_filter;
-use function array_shift;
 use function array_values;
 use function implode;
 use function preg_match;
 use function rtrim;
 use function str_replace;
+use function str_starts_with;
+use function substr;
 use function trim;
 
 use const DIRECTORY_SEPARATOR;
@@ -37,8 +38,8 @@ final class PathHelper
     {
         $parts = array_values(
             array_filter(
-                $parts,
-                static fn(string $part): bool => $part !== '',
+                array: $parts,
+                callback: static fn(string $part): bool => $part !== '',
             ),
         );
 
@@ -46,19 +47,35 @@ final class PathHelper
             return '';
         }
 
+        $parts[0] = str_replace(
+            search: ['/', '\\'],
+            replace: DIRECTORY_SEPARATOR,
+            subject: $parts[0],
+        );
+
         $prefix = self::resolvePrefix(
             firstPart: $parts[0],
         );
 
         if ($prefix !== '') {
-            array_shift($parts);
+            $parts[0] = self::removePrefix(
+                part: $parts[0],
+                prefix: $prefix,
+            );
         }
 
         $normalized = [];
 
         foreach ($parts as $part) {
-            $part = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $part);
-            $part = trim($part, DIRECTORY_SEPARATOR);
+            $part = str_replace(
+                search: ['/', '\\'],
+                replace: DIRECTORY_SEPARATOR,
+                subject: $part,
+            );
+            $part = trim(
+                string: $part,
+                characters: DIRECTORY_SEPARATOR,
+            );
 
             if ($part === '') {
                 continue;
@@ -68,22 +85,36 @@ final class PathHelper
         }
 
         if ($normalized === []) {
-            return rtrim($prefix, DIRECTORY_SEPARATOR);
+            return rtrim(
+                string: $prefix,
+                characters: DIRECTORY_SEPARATOR,
+            );
         }
 
-        return $prefix . implode(DIRECTORY_SEPARATOR, $normalized);
+        return $prefix . implode(
+            separator: DIRECTORY_SEPARATOR,
+            array: $normalized,
+        );
     }
 
     public static function file(string $directory, string $filename): string
     {
-        return self::join($directory, $filename);
+        return self::join(
+            $directory,
+            $filename,
+        );
     }
 
     private static function resolvePrefix(string $firstPart): string
     {
-        $firstPart = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $firstPart);
-
         if ($firstPart === '.') {
+            return '.' . DIRECTORY_SEPARATOR;
+        }
+
+        if (str_starts_with(
+            haystack: $firstPart,
+            needle: '.' . DIRECTORY_SEPARATOR,
+        )) {
             return '.' . DIRECTORY_SEPARATOR;
         }
 
@@ -91,14 +122,51 @@ final class PathHelper
             return DIRECTORY_SEPARATOR;
         }
 
-        if (preg_match('/^[A-Za-z]:[\\\\\/]?$/', $firstPart) === 1) {
-            return rtrim($firstPart, '\\/') . DIRECTORY_SEPARATOR;
+        if (preg_match('/^[A-Za-z]:$/', $firstPart) === 1) {
+            return $firstPart . DIRECTORY_SEPARATOR;
         }
 
-        if (str_starts_with($firstPart, DIRECTORY_SEPARATOR)) {
+        if (preg_match('/^[A-Za-z]:[\\\\\/]/', $firstPart) === 1) {
+            return substr(
+                string: $firstPart,
+                offset: 0,
+                length: 3,
+            );
+        }
+
+        if (str_starts_with(
+            haystack: $firstPart,
+            needle: DIRECTORY_SEPARATOR,
+        )) {
             return DIRECTORY_SEPARATOR;
         }
 
         return '';
+    }
+
+    private static function removePrefix(string $part, string $prefix): string
+    {
+        if ($prefix === DIRECTORY_SEPARATOR) {
+            return substr(
+                string: $part,
+                offset: 1,
+            );
+        }
+
+        if ($prefix === '.' . DIRECTORY_SEPARATOR) {
+            return substr(
+                string: $part,
+                offset: 2,
+            );
+        }
+
+        if (preg_match('/^[A-Za-z]:[\\\\\/]/', $prefix) === 1) {
+            return substr(
+                string: $part,
+                offset: 3,
+            );
+        }
+
+        return $part;
     }
 }

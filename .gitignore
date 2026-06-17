@@ -19,3 +19,9 @@
 # For reusable libraries/packages, composer.lock is usually not committed.
 # The consuming project decides exact dependency versions.
 /composer.lock
+
+
+# Example runtime files
+# Generated when running examples locally.
+/examples/storage/
+/examples/placeholder.png
