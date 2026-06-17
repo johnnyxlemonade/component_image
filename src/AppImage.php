@@ -156,9 +156,9 @@ final class AppImage
     private function getProvider(): FileProvider
     {
         return $this->provider ??= new FileProvider(
-            dir: $this->getDirectory(),
-            filesystem: $this->getFilesystem(),
+            directory: $this->getDirectory(),
             data: $this->getData(),
+            filesystem: $this->getFilesystem(),
             file: $this->baseName
         );
     }

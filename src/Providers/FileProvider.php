@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Lemonade\Image\Providers;
 
@@ -50,26 +52,21 @@ use Lemonade\Image\Utils\FileSystem;
  */
 final class FileProvider
 {
-    private ?string $appFileFs       = null;
-    private ?string $appCacheFile    = null;
-    private ?string $appCacheWebp    = null;
-    private ?string $appMissingPng   = null;
-    private ?string $appMissingWebp  = null;
-
-    private int $localImageMTime = 0;
+    private ?string $appFileFs      = null;
+    private ?string $appCacheFile   = null;
+    private ?string $appCacheWebp   = null;
+    private ?string $appMissingPng  = null;
+    private ?string $appMissingWebp = null;
 
     /**
      * Vytvoří file provider kontext.
      */
     public function __construct(
-        private readonly DirectoryProvider $dir,
+        private readonly DirectoryProvider $directory,
         private readonly DataProvider $data,
         private readonly FileSystem $filesystem,
         ?string $file = null
     ) {
-        $this->appDir  = $dir;
-        $this->appData = $data;
-
         $this->setFile($file ?? 'missing.png');
     }
 
@@ -118,7 +115,7 @@ final class FileProvider
      */
     public function getData(): DataProvider
     {
-        return $this->appData;
+        return $this->data;
     }
 
     /**
@@ -126,7 +123,7 @@ final class FileProvider
      */
     public function getDirectory(): DirectoryProvider
     {
-        return $this->appDir;
+        return $this->directory;
     }
 
     /**
@@ -140,10 +137,10 @@ final class FileProvider
     /**
      * Vytvoří adresář pro daný soubor.
      */
-    public function createDirectory(string $dir): void
+    public function createDirectory(string $file): void
     {
         try {
-            $this->filesystem->createDir(dirname($dir));
+            $this->filesystem->createDir(dirname($file));
         } catch (IOException) {
             // silent by design
         }
@@ -155,7 +152,7 @@ final class FileProvider
     public function deleteCache(): void
     {
         try {
-            $this->filesystem->delete($this->appDir->getCache());
+            $this->filesystem->delete($this->directory->getCache());
         } catch (IOException) {
             // silent by design
         }
@@ -189,6 +186,7 @@ final class FileProvider
         }
 
         ImageProvider::setNoModified();
+
         return true;
     }
 
@@ -206,12 +204,20 @@ final class FileProvider
             return false;
         }
 
-        $ext  = $this->resolveOutputType($cacheFile);
-        $data = file_get_contents($cacheFile);
-        $size = filesize($cacheFile);
+        $content = file_get_contents($cacheFile);
+        if ($content === false) {
+            return false;
+        }
 
-        ImageProvider::sendHeader($ext, $size);
-        ImageProvider::sendContent($data);
+        $size = filesize($cacheFile);
+        if ($size === false) {
+            return false;
+        }
+
+        $type = $this->resolveOutputType($cacheFile);
+
+        ImageProvider::sendHeader($type, $size);
+        ImageProvider::sendContent($content);
 
         return true;
     }
@@ -223,44 +229,46 @@ final class FileProvider
     {
         $info = pathinfo($file);
 
+        $filename = $info['filename'] ?? 'missing';
+        $extension = $info['extension'] ?? 'png';
+
         $this->appFileFs = sprintf(
             '%s/%s.%s',
-            $this->appDir->getStorage(),
-            $info['filename'],
-            $info['extension']
+            $this->directory->getStorage(),
+            $filename,
+            $extension
         );
 
-        // === ROZŠÍŘENÝ HASH (origin + args) ===
         $cacheHash = substr(
-            sha1($this->appFileFs . '|' . $this->appData->getHash()),
+            sha1($this->appFileFs . '|' . $this->data->getHash()),
             0,
             32
         );
 
         $this->appCacheFile = sprintf(
             '%s/%s-%s.%s',
-            $this->appDir->getCache(),
-            $info['filename'],
+            $this->directory->getCache(),
+            $filename,
             $cacheHash,
-            $info['extension']
+            $extension
         );
 
         $this->appCacheWebp = sprintf(
             '%s/%s-%s.webp',
-            $this->appDir->getCache(),
-            $info['filename'],
+            $this->directory->getCache(),
+            $filename,
             $cacheHash
         );
 
         // error / missing – pouze podle varianty
         $this->appMissingPng = sprintf(
             './storage/0/cache/0/%s.png',
-            $this->appData->getHash()
+            $this->data->getHash()
         );
 
         $this->appMissingWebp = sprintf(
             './storage/0/cache/0/%s.webp',
-            $this->appData->getHash()
+            $this->data->getHash()
         );
     }
 
