@@ -106,4 +106,32 @@ final class ImageOptionsParserTest extends TestCase
         self::assertSame(0, $options->getCrop());
         self::assertTrue($options->isMissing());
     }
+
+    public function testInvalidTokensDoNotOverridePreviousValidValues(): void
+    {
+        $options = (new ImageOptionsParser(
+            args: 'w800-wabc-h600-habc-q80-qabc-c000000-cxyz-z3-z9-e0-e9',
+        ))->toDTO();
+
+        self::assertSame(800, $options->getWidth());
+        self::assertSame(600, $options->getHeight());
+        self::assertSame(80, $options->getQuality());
+        self::assertSame('000000', $options->getCanvasColor());
+        self::assertSame(3, $options->getCrop());
+        self::assertFalse($options->isMissing());
+    }
+
+    public function testClampsQualityToSupportedRange(): void
+    {
+        $low = (new ImageOptionsParser(
+            args: 'q0',
+        ))->toDTO();
+
+        $high = (new ImageOptionsParser(
+            args: 'q999',
+        ))->toDTO();
+
+        self::assertSame(1, $low->getQuality());
+        self::assertSame(100, $high->getQuality());
+    }
 }
