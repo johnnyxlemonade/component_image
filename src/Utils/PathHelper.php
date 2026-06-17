@@ -8,13 +8,17 @@ use function array_filter;
 use function array_shift;
 use function array_values;
 use function implode;
+use function preg_match;
 use function rtrim;
+use function str_replace;
 use function trim;
 
 use const DIRECTORY_SEPARATOR;
 
 /**
  * Small helper for building normalized filesystem paths.
+ *
+ * @internal
  */
 final class PathHelper
 {
@@ -33,16 +37,18 @@ final class PathHelper
             return '';
         }
 
-        $prefix = '';
+        $prefix = self::resolvePrefix(
+            firstPart: $parts[0],
+        );
 
-        if ($parts[0] === '.') {
-            $prefix = '.' . DIRECTORY_SEPARATOR;
+        if ($prefix !== '') {
             array_shift($parts);
         }
 
         $normalized = [];
 
         foreach ($parts as $part) {
+            $part = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $part);
             $part = trim($part, DIRECTORY_SEPARATOR);
 
             if ($part === '') {
@@ -53,9 +59,7 @@ final class PathHelper
         }
 
         if ($normalized === []) {
-            return $prefix === ''
-                ? ''
-                : rtrim($prefix, DIRECTORY_SEPARATOR);
+            return rtrim($prefix, DIRECTORY_SEPARATOR);
         }
 
         return $prefix . implode(DIRECTORY_SEPARATOR, $normalized);
@@ -64,5 +68,28 @@ final class PathHelper
     public static function file(string $directory, string $filename): string
     {
         return self::join($directory, $filename);
+    }
+
+    private static function resolvePrefix(string $firstPart): string
+    {
+        $firstPart = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $firstPart);
+
+        if ($firstPart === '.') {
+            return '.' . DIRECTORY_SEPARATOR;
+        }
+
+        if ($firstPart === DIRECTORY_SEPARATOR) {
+            return DIRECTORY_SEPARATOR;
+        }
+
+        if (preg_match('/^[A-Za-z]:[\\\\\/]?$/', $firstPart) === 1) {
+            return rtrim($firstPart, '\\/') . DIRECTORY_SEPARATOR;
+        }
+
+        if (str_starts_with($firstPart, DIRECTORY_SEPARATOR)) {
+            return DIRECTORY_SEPARATOR;
+        }
+
+        return '';
     }
 }
