@@ -119,7 +119,7 @@ final class FileProvider
     }
 
     /**
-     * Vytvoří adresář pro daný soubor.
+     * @deprecated Use ImageCacheStorage::createDirectoryForFile() instead.
      */
     public function createDirectory(string $file): void
     {
@@ -131,7 +131,7 @@ final class FileProvider
     }
 
     /**
-     * Smaže cache adresář.
+     * @deprecated Use ImageCacheStorage::deleteCache() instead.
      */
     public function deleteCache(): void
     {
@@ -143,7 +143,7 @@ final class FileProvider
     }
 
     /**
-     * Ošetří HTTP 304 Not Modified.
+     * @deprecated Use ImageCacheResponder::sendBrowserCacheIfFresh() instead.
      */
     public function sendBrowserImage(): bool
     {
@@ -175,7 +175,7 @@ final class FileProvider
     }
 
     /**
-     * Odešle existující cache obrázek.
+     * @deprecated Use ImageCacheResponder::sendCacheImageIfExists() instead.
      */
     public function sendCacheImage(): bool
     {

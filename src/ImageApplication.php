@@ -14,6 +14,9 @@ final class ImageApplication
 {
     public function __construct(
         private readonly ImageContext $context,
+        private readonly ImageCacheResponder $cacheResponder,
+        private readonly ImageCacheStorage $cacheStorage,
+        private readonly ImageResponseEmitter $responseEmitter,
     ) {}
 
     public function run(): void
@@ -21,11 +24,11 @@ final class ImageApplication
         $provider = $this->context->getFileProvider();
 
         try {
-            if ($provider->sendBrowserImage()) {
+            if ($this->cacheResponder->sendBrowserCacheIfFresh($provider)) {
                 return;
             }
 
-            if ($provider->sendCacheImage()) {
+            if ($this->cacheResponder->sendCacheImageIfExists($provider)) {
                 return;
             }
 
@@ -34,7 +37,7 @@ final class ImageApplication
                 return;
             }
 
-            $provider->deleteCache();
+            $this->cacheStorage->deleteCache($this->context);
             ImageProvider::imageError($provider);
         } catch (Throwable) {
             $this->sendFallbackImage();

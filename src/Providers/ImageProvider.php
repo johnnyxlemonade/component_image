@@ -99,7 +99,7 @@ final class ImageProvider
     }
 
     /**
-     * Sends HTTP headers for image response.
+     * @deprecated Use ImageResponseEmitter::sendHeader() instead.
      */
     public static function sendHeader(?int $mime = null, int $size = 0): void
     {
@@ -138,7 +138,7 @@ final class ImageProvider
     }
 
     /**
-     * 304 Not Modified shortcut.
+     * @deprecated Use ImageResponseEmitter::sendNotModified() instead.
      */
     public static function setNoModified(): void
     {
@@ -146,7 +146,7 @@ final class ImageProvider
     }
 
     /**
-     * Outputs image binary and terminates.
+     * @deprecated Use ImageResponseEmitter::sendBinary() instead.
      */
     public static function sendContent(?string $content = null): never
     {

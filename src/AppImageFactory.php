@@ -29,8 +29,15 @@ final class AppImageFactory
 
     public function createApplication(ImageRequest $request): ImageApplication
     {
+        $responseEmitter = new ImageResponseEmitter();
+
         return new ImageApplication(
             context: $this->createContext($request),
+            cacheResponder: new ImageCacheResponder(
+                responseEmitter: $responseEmitter,
+            ),
+            cacheStorage: new ImageCacheStorage(),
+            responseEmitter: $responseEmitter,
         );
     }
 
