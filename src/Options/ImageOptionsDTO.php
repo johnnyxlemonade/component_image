@@ -128,6 +128,11 @@ final class ImageOptionsDTO
         return $this->height;
     }
 
+    public function getResizeMode(): ImageResizeMode
+    {
+        return ImageResizeMode::fromLegacyCrop($this->crop);
+    }
+
     public function getCrop(): int
     {
         return $this->crop;

@@ -259,7 +259,7 @@ final class ImageOptionsParser
 
         $crop = (int) $value;
 
-        if (!in_array($crop, [0, 1, 2, 3, 4, 5], true)) {
+        if (!in_array($crop, ImageResizeMode::legacyCropValues(), true)) {
             return;
         }
 

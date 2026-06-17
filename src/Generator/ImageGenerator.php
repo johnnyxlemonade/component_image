@@ -9,10 +9,10 @@ use Lemonade\Image\Detection\ImageFileInspector;
 use Lemonade\Image\Detection\WebpSupportDetector;
 use Lemonade\Image\Exceptions\Image\ImagePlaceholderException;
 use Lemonade\Image\Exceptions\Image\ImageTypeException;
-
 use Lemonade\Image\ImageResult;
 use Lemonade\Image\ImageStorageConfig;
 use Lemonade\Image\Options\ImageOptionsDTO;
+use Lemonade\Image\Options\ImageResizeMode;
 use Lemonade\Image\Value\RgbColor;
 
 use function imagecolorallocatealpha;
@@ -99,32 +99,32 @@ final class ImageGenerator
 
     private function processResize(AppGenerator $source, ImageOptionsDTO $options): AppGenerator
     {
-        return match ($options->getCrop()) {
-            -1 => clone $source,
-            1 => $this->resizeFitWithCanvas(
+        return match ($options->getResizeMode()) {
+            ImageResizeMode::Original => clone $source,
+            ImageResizeMode::FitWithCanvas => $this->resizeFitWithCanvas(
                 source: $source,
                 options: $options,
                 scale: self::CANVAS_SCALE_NORMAL,
             ),
-            2 => $this->resizeExact(
+            ImageResizeMode::Exact => $this->resizeExact(
                 source: $source,
                 options: $options,
             ),
-            3 => $this->resizeFit(
+            ImageResizeMode::Fit => $this->resizeFit(
                 source: $source,
                 options: $options,
             ),
-            4 => $this->resizeFitWithCanvas(
+            ImageResizeMode::FitWithBiggerCanvas => $this->resizeFitWithCanvas(
                 source: $source,
                 options: $options,
                 scale: self::CANVAS_SCALE_BIGGER,
             ),
-            5 => $this->resizeFitWithCanvas(
+            ImageResizeMode::FitWithMaxCanvas => $this->resizeFitWithCanvas(
                 source: $source,
                 options: $options,
                 scale: self::CANVAS_SCALE_MAX,
             ),
-            default => $this->resizeShrink(
+            ImageResizeMode::Shrink => $this->resizeShrink(
                 source: $source,
                 options: $options,
             ),
