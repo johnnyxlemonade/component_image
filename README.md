@@ -1,8 +1,8 @@
 # Lemonade Image Component
 
-[![PHPStan](https://github.com/johnnyxlemonade/component_image/actions/workflows/phpstan.yml/badge.svg)](https://github.com/johnnyxlemonade/framework/actions/workflows/phpstan.yml)
-[![Tests](https://github.com/johnnyxlemonade/component_image/actions/workflows/phpunit.yml/badge.svg)](https://github.com/johnnyxlemonade/framework/actions/workflows/phpunit.yml)
-[![Lint](https://github.com/johnnyxlemonade/component_image/actions/workflows/lint.yml/badge.svg)](https://github.com/johnnyxlemonade/framework/actions/workflows/lint.yml)
+[![PHPStan](https://github.com/johnnyxlemonade/component_image/actions/workflows/phpstan.yml/badge.svg)](https://github.com/johnnyxlemonade/component_image/actions/workflows/phpstan.yml)
+[![Tests](https://github.com/johnnyxlemonade/component_image/actions/workflows/phpunit.yml/badge.svg)](https://github.com/johnnyxlemonade/component_image/actions/workflows/phpunit.yml)
+[![Lint](https://github.com/johnnyxlemonade/component_image/actions/workflows/lint.yml/badge.svg)](https://github.com/johnnyxlemonade/component_image/actions/workflows/lint.yml)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 Standalone GD-based image component for PHP 8.1+.
@@ -21,15 +21,15 @@ This package is not published on Packagist. Install it directly from the public 
 
 ```json
 {
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/johnnyxlemonade/component_image.git"
-        }
-    ],
-    "require": {
-        "lemonade/component_image": "dev-master"
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/johnnyxlemonade/component_image.git"
     }
+  ],
+  "require": {
+    "lemonade/component_image": "dev-master"
+  }
 }
 ```
 
@@ -57,6 +57,7 @@ composer require lemonade/component_image:dev-master
 - HTTP cache headers
 - Filesystem abstraction for cache writes
 - Typed component exceptions
+- PHPUnit test suite
 - PHPStan level 10 ready
 
 ## Development
@@ -77,6 +78,18 @@ Run static analysis:
 
 ```bash
 composer stan
+```
+
+Run tests:
+
+```bash
+composer test
+```
+
+Run tests in CI mode:
+
+```bash
+composer test:ci
 ```
 
 Check coding standards:
