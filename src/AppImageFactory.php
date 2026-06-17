@@ -30,30 +30,43 @@ final class AppImageFactory
     public function createApplication(ImageRequest $request): ImageApplication
     {
         $responseEmitter = new ImageResponseEmitter();
+        $fileInspector = new ImageFileInspector();
 
         return new ImageApplication(
-            context: $this->createContext($request),
+            context: $this->createContext(
+                request: $request,
+            ),
             cacheResponder: new ImageCacheResponder(
                 responseEmitter: $responseEmitter,
+                fileInspector: $fileInspector,
             ),
             cacheStorage: new ImageCacheStorage(),
             responseEmitter: $responseEmitter,
-            generator: new ImageGenerator(),
+            generator: new ImageGenerator(
+                fileInspector: $fileInspector,
+            ),
+            fileInspector: $fileInspector,
         );
     }
 
     private function createContext(ImageRequest $request): ImageContext
     {
         return new ImageContext(
-            fileProvider: $this->createFileProvider($request),
+            file: $this->createFileContext(
+                request: $request,
+            ),
         );
     }
 
-    private function createFileProvider(ImageRequest $request): FileProvider
+    private function createFileContext(ImageRequest $request): ImageFileContext
     {
-        return new FileProvider(
-            directory: $this->createDirectoryProvider($request),
-            data: $this->createDataProvider($request),
+        return new ImageFileContext(
+            directory: $this->createDirectoryProvider(
+                request: $request,
+            ),
+            data: $this->createDataProvider(
+                request: $request,
+            ),
             filesystem: $this->filesystem,
             file: $request->baseName,
         );

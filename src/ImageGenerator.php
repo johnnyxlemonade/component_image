@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Lemonade\Image;
 
-use Lemonade\Image\Exceptions\Image\ImageCacheException;
 use Lemonade\Image\Exceptions\Image\ImagePlaceholderException;
 use Lemonade\Image\Exceptions\Image\ImageSourceException;
 use Lemonade\Image\Exceptions\Image\ImageTypeException;
@@ -12,7 +11,6 @@ use Lemonade\Image\Providers\ColorProvider;
 use Lemonade\Image\Providers\FileProvider;
 use Lemonade\Image\Providers\WebpProvider;
 
-use function file_exists;
 use function imagecolorallocatealpha;
 use function imagecreatetruecolor;
 use function imagedestroy;
@@ -29,66 +27,88 @@ final class ImageGenerator
     private const CANVAS_SCALE_BIGGER = 0.82;
     private const CANVAS_SCALE_MAX = 0.90;
 
-    public function createVariant(FileProvider $provider): ImageResult
+    public function __construct(
+        private readonly ImageFileInspector $fileInspector,
+    ) {}
+
+    public function createVariant(ImageFileContext $file): ImageResult
     {
-        $options = $provider->getData()->getDTO();
+        $options = $file->getData()->getDTO();
 
-        $source = $this->loadSource($provider);
-        $image = $this->processResize($source, $options);
+        $source = $this->loadSource(
+            file: $file,
+        );
 
-        $type = $this->getType($provider);
-        $quality = $options->getQuality();
-
-        $this->saveCache($provider, $image, $quality, $type);
+        $image = $this->processResize(
+            source: $source,
+            options: $options,
+        );
 
         return new ImageResult(
             image: $image,
-            type: $type,
-            quality: $quality,
+            type: $this->getType(
+                file: $file,
+            ),
+            quality: $options->getQuality(),
         );
     }
 
-    public function createFallback(FileProvider $provider): ImageResult
+    public function createFallback(ImageFileContext $file): ImageResult
     {
-        $options = $provider->getData()->getDTO();
+        $options = $file->getData()->getDTO();
 
-        $image = $this->buildErrorImage($options, $provider);
         $type = WebpProvider::hasSupport()
             ? AppGenerator::WEBP
             : AppGenerator::PNG;
 
-        $quality = $options->getQuality();
-
-        $this->saveErrorCache($provider, $image, $quality, $type);
-
         return new ImageResult(
-            image: $image,
+            image: $this->buildErrorImage(
+                options: $options,
+                file: $file,
+            ),
             type: $type,
-            quality: $quality,
+            quality: $options->getQuality(),
         );
     }
 
-    private function loadSource(FileProvider $provider): AppGenerator
+    private function loadSource(ImageFileContext $file): AppGenerator
     {
-        $file = $provider->getFileFs();
-
-        if ($file === null) {
-            throw ImageSourceException::missingSourcePath();
-        }
-
-        return AppGenerator::fromFile($file);
+        return AppGenerator::fromFile(
+            file: $file->getSourceFile(),
+        );
     }
 
     private function processResize(AppGenerator $source, ImageOptionsDTO $options): AppGenerator
     {
         return match ($options->getCrop()) {
             -1 => clone $source,
-            1 => $this->resizeFitWithCanvas($source, $options, self::CANVAS_SCALE_NORMAL),
-            2 => $this->resizeExact($source, $options),
-            3 => $this->resizeFit($source, $options),
-            4 => $this->resizeFitWithCanvas($source, $options, self::CANVAS_SCALE_BIGGER),
-            5 => $this->resizeFitWithCanvas($source, $options, self::CANVAS_SCALE_MAX),
-            default => $this->resizeShrink($source, $options),
+            1 => $this->resizeFitWithCanvas(
+                source: $source,
+                options: $options,
+                scale: self::CANVAS_SCALE_NORMAL,
+            ),
+            2 => $this->resizeExact(
+                source: $source,
+                options: $options,
+            ),
+            3 => $this->resizeFit(
+                source: $source,
+                options: $options,
+            ),
+            4 => $this->resizeFitWithCanvas(
+                source: $source,
+                options: $options,
+                scale: self::CANVAS_SCALE_BIGGER,
+            ),
+            5 => $this->resizeFitWithCanvas(
+                source: $source,
+                options: $options,
+                scale: self::CANVAS_SCALE_MAX,
+            ),
+            default => $this->resizeShrink(
+                source: $source,
+                options: $options,
+            ),
         };
     }
 
@@ -105,20 +125,27 @@ final class ImageGenerator
 
         $thumb = clone $source;
         $thumb->resize(
-            (int) round($canvasWidth * $scale),
-            (int) round($canvasHeight * $scale),
-            AppGenerator::FIT,
-            true,
+            width: (int) round($canvasWidth * $scale),
+            height: (int) round($canvasHeight * $scale),
+            mode: AppGenerator::FIT,
+            shrinkOnly: true,
         );
 
         $image = AppGenerator::fromBlank(
-            $canvasWidth,
-            $canvasHeight,
-            ColorProvider::hexRgb($options->getCanvasColor())->toArray(),
+            width: $canvasWidth,
+            height: $canvasHeight,
+            color: ColorProvider::hexRgb($options->getCanvasColor())->toArray(),
         );
 
-        $image->saveAlpha(true);
-        $image->place($thumb, '50%', '50%');
+        $image->saveAlpha(
+            save: true,
+        );
+
+        $image->place(
+            image: $thumb,
+            left: '50%',
+            top: '50%',
+        );
 
         return $image;
     }
@@ -130,10 +157,10 @@ final class ImageGenerator
 
         $image = clone $source;
         $image->resize(
-            $width ?? $height ?? $image->getWidth(),
-            $height ?? $width ?? $image->getHeight(),
-            AppGenerator::EXACT,
-            true,
+            width: $width ?? $height ?? $image->getWidth(),
+            height: $height ?? $width ?? $image->getHeight(),
+            mode: AppGenerator::EXACT,
+            shrinkOnly: true,
         );
 
         return $image;
@@ -143,9 +170,9 @@ final class ImageGenerator
     {
         $image = clone $source;
         $image->resize(
-            $options->getWidth(),
-            $options->getHeight(),
-            AppGenerator::FIT | AppGenerator::SHRINK_ONLY,
+            width: $options->getWidth(),
+            height: $options->getHeight(),
+            mode: AppGenerator::FIT | AppGenerator::SHRINK_ONLY,
         );
 
         return $image;
@@ -158,16 +185,16 @@ final class ImageGenerator
 
         $image = clone $source;
         $image->resize(
-            $width ?? $height ?? $image->getWidth(),
-            $height ?? $width ?? $image->getHeight(),
-            AppGenerator::SHRINK_ONLY,
-            true,
+            width: $width ?? $height ?? $image->getWidth(),
+            height: $height ?? $width ?? $image->getHeight(),
+            mode: AppGenerator::SHRINK_ONLY,
+            shrinkOnly: true,
         );
 
         return $image;
     }
 
-    private function buildErrorImage(ImageOptionsDTO $options, FileProvider $provider): AppGenerator
+    private function buildErrorImage(ImageOptionsDTO $options, ImageFileContext $file): AppGenerator
     {
         $width = $options->getWidth();
         $height = $options->getHeight();
@@ -182,40 +209,58 @@ final class ImageGenerator
             $height = $width;
         }
 
-        $missingPng = $provider->getMissingPng();
+        $missingPng = $file->getMissingPng();
 
-        if ($missingPng !== null && $provider->isFileExists($missingPng)) {
-            return AppGenerator::fromFile($missingPng);
+        if ($this->fileInspector->exists(
+            file: $missingPng,
+        )) {
+            return AppGenerator::fromFile(
+                file: $missingPng,
+            );
         }
 
         $thumb = $this->loadErrorThumb();
+
         $thumb->resize(
-            (int) round($width * self::CANVAS_SCALE_NORMAL),
-            (int) round($height * self::CANVAS_SCALE_NORMAL),
-            AppGenerator::FIT | AppGenerator::SHRINK_ONLY,
-            true,
+            width: (int) round($width * self::CANVAS_SCALE_NORMAL),
+            height: (int) round($height * self::CANVAS_SCALE_NORMAL),
+            mode: AppGenerator::FIT | AppGenerator::SHRINK_ONLY,
+            shrinkOnly: true,
         );
 
         $rgb = ColorProvider::hexRgb($canvas)->toArray();
 
         $image = AppGenerator::fromBlank(
-            $width,
-            $height,
-            $rgb,
+            width: $width,
+            height: $height,
+            color: $rgb,
         );
 
         $image->paletteToTrueColor();
 
         $alpha = $image->colorAllocateAlpha(
-            $rgb['red'],
-            $rgb['green'],
-            $rgb['blue'],
-            0,
+            red: $rgb['red'],
+            green: $rgb['green'],
+            blue: $rgb['blue'],
+            alpha: 0,
         );
 
-        $image->fill(0, 0, $alpha);
-        $image->saveAlpha(true);
-        $image->place($thumb, '50%', '50%', 70);
+        $image->fill(
+            x: 0,
+            y: 0,
+            color: $alpha,
+        );
+
+        $image->saveAlpha(
+            save: true,
+        );
+
+        $image->place(
+            image: $thumb,
+            left: '50%',
+            top: '50%',
+            opacity: 70,
+        );
 
         return $image;
     }
@@ -224,98 +269,76 @@ final class ImageGenerator
     {
         $custom = './themes/frontend/error.png';
 
-        if (file_exists($custom)) {
-            return AppGenerator::fromFile($custom);
+        if ($this->fileInspector->exists(
+            file: $custom,
+        )) {
+            return AppGenerator::fromFile(
+                file: $custom,
+            );
         }
 
-        $image = imagecreatetruecolor(1, 1);
+        $image = imagecreatetruecolor(
+            width: 1,
+            height: 1,
+        );
+
         if ($image === false) {
             throw ImagePlaceholderException::createFailed();
         }
 
-        imagesavealpha($image, true);
+        imagesavealpha(
+            image: $image,
+            enable: true,
+        );
 
-        $white = imagecolorallocatealpha($image, 255, 255, 255, 0);
+        $white = imagecolorallocatealpha(
+            image: $image,
+            red: 255,
+            green: 255,
+            blue: 255,
+            alpha: 0,
+        );
+
         if ($white === false) {
-            imagedestroy($image);
+            imagedestroy(
+                image: $image,
+            );
 
             throw ImagePlaceholderException::colorAllocationFailed();
         }
 
-        imagefill($image, 0, 0, $white);
+        imagefill(
+            image: $image,
+            x: 0,
+            y: 0,
+            color: $white,
+        );
 
         ob_start();
-        imagepng($image);
+        imagepng(
+            image: $image,
+        );
+
         $png = ob_get_clean();
-        imagedestroy($image);
+
+        imagedestroy(
+            image: $image,
+        );
 
         if ($png === false) {
             throw ImagePlaceholderException::renderFailed();
         }
 
-        return AppGenerator::fromString($png);
+        return AppGenerator::fromString(
+            s: $png,
+        );
     }
 
-    private function saveCache(
-        FileProvider $provider,
-        AppGenerator $image,
-        int $quality,
-        int $type,
-    ): void {
-        $cacheFile = $provider->getCacheFile();
-        $cacheWebp = $provider->getCacheWebp();
-
-        if ($cacheFile === null || $cacheWebp === null) {
-            throw ImageCacheException::missingCachePath();
-        }
-
-        $provider->createDirectory($cacheFile);
-
-        if (!WebpProvider::hasSupport()) {
-            $image->save($cacheFile, $quality, $type, $provider->getFilesystem());
-
-            return;
-        }
-
-        if ($type === AppGenerator::PNG) {
-            $image->paletteToTrueColor();
-        }
-
-        $image->save($cacheWebp, $quality, AppGenerator::WEBP, $provider->getFilesystem());
-    }
-
-    private function saveErrorCache(
-        FileProvider $provider,
-        AppGenerator $image,
-        int $quality,
-        int $type,
-    ): void {
-        $png = $provider->getMissingPng();
-        $webp = $provider->getMissingWebp();
-
-        if ($png === null || $webp === null) {
-            throw ImageCacheException::missingErrorCachePath();
-        }
-
-        $provider->createDirectory($png);
-
-        $image->save($png, $quality, AppGenerator::PNG, $provider->getFilesystem());
-
-        if ($type === AppGenerator::WEBP) {
-            $image->paletteToTrueColor();
-            $image->save($webp, $quality, AppGenerator::WEBP, $provider->getFilesystem());
-        }
-    }
-
-    private function getType(FileProvider $provider): int
+    private function getType(ImageFileContext $file): int
     {
-        $file = $provider->getFileFs();
-
-        if ($file === null) {
-            throw ImageSourceException::missingSourcePath();
-        }
-
-        $type = AppGenerator::detectTypeFromFile($file);
+        $type = AppGenerator::detectTypeFromFile(
+            file: $file->getSourceFile(),
+        );
 
         if ($type === null) {
             throw ImageTypeException::detectionFailed();
@@ -323,4 +346,5 @@ final class ImageGenerator
 
         return $type;
     }
+
 }

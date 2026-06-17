@@ -38,11 +38,10 @@ final class ImageCacheStorage
         $cacheFile = $context->getCacheFile();
         $cacheWebp = $context->getCacheWebp();
 
-        if ($cacheFile === null || $cacheWebp === null) {
-            throw ImageCacheException::missingCachePath();
-        }
-
-        $this->createDirectoryForFile($context, $cacheFile);
+        $this->createDirectoryForFile(
+            context: $context,
+            file: $cacheFile,
+        );
 
         $image = $result->getImage();
         $quality = $result->getQuality();
@@ -76,11 +75,10 @@ final class ImageCacheStorage
         $png = $context->getMissingPng();
         $webp = $context->getMissingWebp();
 
-        if ($png === null || $webp === null) {
-            throw ImageCacheException::missingErrorCachePath();
-        }
-
-        $this->createDirectoryForFile($context, $png);
+        $this->createDirectoryForFile(
+            context: $context,
+            file: $png,
+        );
 
         $image = $result->getImage();
         $quality = $result->getQuality();

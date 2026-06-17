@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Lemonade\Image;
 
-use Lemonade\Image\Providers\FileProvider;
 use Lemonade\Image\Providers\ServerProvider;
 use Lemonade\Image\Providers\WebpProvider;
 
@@ -19,9 +18,10 @@ final class ImageCacheResponder
 {
     public function __construct(
         private readonly ImageResponseEmitter $responseEmitter,
+        private readonly ImageFileInspector $fileInspector,
     ) {}
 
-    public function sendBrowserCacheIfFresh(FileProvider $provider): bool
+    public function sendBrowserCacheIfFresh(ImageFileContext $file): bool
     {
         if (!ServerProvider::has('HTTP_IF_MODIFIED_SINCE')) {
             return false;
@@ -31,12 +31,22 @@ final class ImageCacheResponder
             ServerProvider::get('HTTP_IF_MODIFIED_SINCE'),
         );
 
-        if ($clientTime < 1 || !$provider->isFileExists($provider->getFileFs())) {
+        if (
+            $clientTime < 1 ||
+            !$this->fileInspector->exists(
+                file: $file->getSourceFile(),
+            )
+        ) {
             return false;
         }
 
-        $cacheFile = $this->resolveCacheFile($provider);
-        if ($cacheFile === null || !$provider->isFileExists($cacheFile)) {
+        $cacheFile = $this->resolveCacheFile(
+            file: $file,
+        );
+
+        if (!$this->fileInspector->exists(
+            file: $cacheFile,
+        )) {
             return false;
         }
 
@@ -50,14 +60,21 @@ final class ImageCacheResponder
         return true;
     }
 
-    public function sendCacheImageIfExists(FileProvider $provider): bool
+    public function sendCacheImageIfExists(ImageFileContext $file): bool
     {
-        if (!$provider->isFileExists($provider->getFileFs())) {
+        if (!$this->fileInspector->exists(
+            file: $file->getSourceFile(),
+        )) {
             return false;
         }
 
-        $cacheFile = $this->resolveCacheFile($provider);
-        if ($cacheFile === null || !$provider->isFileExists($cacheFile)) {
+        $cacheFile = $this->resolveCacheFile(
+            file: $file,
+        );
+
+        if (!$this->fileInspector->exists(
+            file: $cacheFile,
+        )) {
             return false;
         }
 
@@ -66,7 +83,10 @@ final class ImageCacheResponder
             return false;
         }
 
-        $type = $this->resolveOutputType($cacheFile);
+        $type = $this->resolveOutputType(
+            file: $cacheFile,
+        );
+
         if ($type === null) {
             return false;
         }
@@ -77,11 +97,11 @@ final class ImageCacheResponder
         );
     }
 
-    private function resolveCacheFile(FileProvider $provider): ?string
+    private function resolveCacheFile(ImageFileContext $file): string
     {
         return WebpProvider::hasSupport()
-            ? $provider->getCacheWebp()
-            : $provider->getCacheFile();
+            ? $file->getCacheWebp()
+            : $file->getCacheFile();
     }
 
     private function resolveOutputType(string $file): ?int
@@ -90,6 +110,8 @@ final class ImageCacheResponder
             return AppGenerator::WEBP;
         }
 
-        return AppGenerator::detectTypeFromFile($file);
+        return AppGenerator::detectTypeFromFile(
+            file: $file,
+        );
     }
 }

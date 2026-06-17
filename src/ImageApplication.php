@@ -17,28 +17,47 @@ final class ImageApplication
         private readonly ImageCacheStorage $cacheStorage,
         private readonly ImageResponseEmitter $responseEmitter,
         private readonly ImageGenerator $generator,
+        private readonly ImageFileInspector $fileInspector,
     ) {}
 
     public function run(): void
     {
-        $provider = $this->context->getFileProvider();
+        $file = $this->context->getFile();
 
         try {
-            if ($this->cacheResponder->sendBrowserCacheIfFresh($provider)) {
+            if ($this->cacheResponder->sendBrowserCacheIfFresh(
+                file: $file,
+            )) {
                 return;
             }
 
-            if ($this->cacheResponder->sendCacheImageIfExists($provider)) {
+            if ($this->cacheResponder->sendCacheImageIfExists(
+                file: $file,
+            )) {
                 return;
             }
 
-            if ($provider->isFileExists($provider->getFileFs())) {
-                $result = $this->generator->createVariant($provider);
-                $this->cacheStorage->saveVariant($this->context, $result);
-                $this->responseEmitter->sendResult($result);
+            if ($this->fileInspector->exists(
+                file: $file->getSourceFile(),
+            )) {
+                $result = $this->generator->createVariant(
+                    file: $file,
+                );
+
+                $this->cacheStorage->saveVariant(
+                    context: $this->context,
+                    result: $result,
+                );
+
+                $this->responseEmitter->sendResult(
+                    result: $result,
+                );
             }
 
-            $this->cacheStorage->deleteCache($this->context);
+            $this->cacheStorage->deleteCache(
+                context: $this->context,
+            );
+
             $this->createAndSendFallback();
         } catch (Throwable) {
             $this->createAndSendFallback();
@@ -47,16 +66,25 @@ final class ImageApplication
 
     private function createAndSendFallback(): void
     {
-        $provider = $this->context->getFileProvider();
-        $data = $provider->getData();
+        $file = $this->context->getFile();
+        $data = $this->context->getData();
 
         if ($data->isMissingAllSize()) {
             $data->setWidth(600);
             $data->setHeight(600);
         }
 
-        $result = $this->generator->createFallback($provider);
-        $this->cacheStorage->saveFallback($this->context, $result);
-        $this->responseEmitter->sendResult($result);
+        $result = $this->generator->createFallback(
+            file: $file,
+        );
+
+        $this->cacheStorage->saveFallback(
+            context: $this->context,
+            result: $result,
+        );
+
+        $this->responseEmitter->sendResult(
+            result: $result,
+        );
     }
 }

@@ -6,62 +6,59 @@ namespace Lemonade\Image;
 
 use Lemonade\Image\Providers\DataProvider;
 use Lemonade\Image\Providers\DirectoryProvider;
-use Lemonade\Image\Providers\FileProvider;
 use Lemonade\Image\Utils\FileSystem;
 
 /**
  * Holds runtime context for one image request.
- *
- * This is the application-level context created from ImageRequest.
  */
 final class ImageContext
 {
     public function __construct(
-        private readonly FileProvider $fileProvider,
+        private readonly ImageFileContext $file,
     ) {}
 
-    public function getFileProvider(): FileProvider
+    public function getFile(): ImageFileContext
     {
-        return $this->fileProvider;
+        return $this->file;
     }
 
     public function getData(): DataProvider
     {
-        return $this->fileProvider->getData();
+        return $this->file->getData();
     }
 
     public function getDirectory(): DirectoryProvider
     {
-        return $this->fileProvider->getDirectory();
+        return $this->file->getDirectory();
     }
 
     public function getFilesystem(): FileSystem
     {
-        return $this->fileProvider->getFilesystem();
+        return $this->file->getFilesystem();
     }
 
-    public function getSourceFile(): ?string
+    public function getSourceFile(): string
     {
-        return $this->fileProvider->getFileFs();
+        return $this->file->getSourceFile();
     }
 
-    public function getCacheFile(): ?string
+    public function getCacheFile(): string
     {
-        return $this->fileProvider->getCacheFile();
+        return $this->file->getCacheFile();
     }
 
-    public function getCacheWebp(): ?string
+    public function getCacheWebp(): string
     {
-        return $this->fileProvider->getCacheWebp();
+        return $this->file->getCacheWebp();
     }
 
-    public function getMissingPng(): ?string
+    public function getMissingPng(): string
     {
-        return $this->fileProvider->getMissingPng();
+        return $this->file->getMissingPng();
     }
 
-    public function getMissingWebp(): ?string
+    public function getMissingWebp(): string
     {
-        return $this->fileProvider->getMissingWebp();
+        return $this->file->getMissingWebp();
     }
 }

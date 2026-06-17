@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Lemonade\Image\Providers;
 
+use Lemonade\Image\ImageFileInspector;
 use Lemonade\Image\ImageGenerator;
+use Lemonade\Image\ImageResponseEmitter;
 use Lemonade\Image\ImageResult;
 
 /**
@@ -14,41 +16,57 @@ final class ImageProvider
 {
     public static function imageCreate(FileProvider $app): ImageResult
     {
-        return (new ImageGenerator())->createVariant($app);
+        return self::createGenerator()->createVariant(
+            provider: $app,
+        );
     }
 
     public static function imageError(FileProvider $app): ImageResult
     {
-        return (new ImageGenerator())->createFallback($app);
+        return self::createGenerator()->createFallback(
+            provider: $app,
+        );
     }
 
     /**
-     * @deprecated Use Lemonade\Image\ImageResponseEmitter::sendHeader() instead.
+     * @deprecated Use ImageResponseEmitter::sendHeader() instead.
      */
     public static function sendHeader(?int $mime = null, int $size = 0): void
     {
-        (new \Lemonade\Image\ImageResponseEmitter())->sendHeader(
+        self::createResponseEmitter()->sendHeader(
             type: $mime,
             size: $size,
         );
     }
 
     /**
-     * @deprecated Use Lemonade\Image\ImageResponseEmitter::sendNotModified() instead.
+     * @deprecated Use ImageResponseEmitter::sendNotModified() instead.
      */
     public static function setNoModified(): void
     {
-        (new \Lemonade\Image\ImageResponseEmitter())->sendNotModified();
+        self::createResponseEmitter()->sendNotModified();
     }
 
     /**
-     * @deprecated Use Lemonade\Image\ImageResponseEmitter::sendBinary() instead.
+     * @deprecated Use ImageResponseEmitter::sendBinary() instead.
      */
     public static function sendContent(?string $content = null): never
     {
-        (new \Lemonade\Image\ImageResponseEmitter())->sendBinary(
+        self::createResponseEmitter()->sendBinary(
             content: $content ?? '',
             type: null,
         );
+    }
+
+    private static function createGenerator(): ImageGenerator
+    {
+        return new ImageGenerator(
+            fileInspector: new ImageFileInspector(),
+        );
+    }
+
+    private static function createResponseEmitter(): ImageResponseEmitter
+    {
+        return new ImageResponseEmitter();
     }
 }
