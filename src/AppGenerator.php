@@ -276,8 +276,6 @@ final class AppGenerator
         return in_array($name, ['width', 'height', 'imageResource'], true);
     }
 
-    /**
-     */
     public function resize(
         int|string|null $width = null,
         int|string|null $height = null,
@@ -332,7 +330,6 @@ final class AppGenerator
     }
 
     /**
-     *
      * @return array{0: int, 1: int}
      */
     public static function calculateSize(
@@ -399,8 +396,6 @@ final class AppGenerator
         ];
     }
 
-    /**
-     */
     public function crop(
         int|string $left,
         int|string $top,
@@ -455,7 +450,6 @@ final class AppGenerator
     }
 
     /**
-     *
      * @return array{0: int, 1: int, 2: int, 3: int}
      */
     public static function calculateCutout(
@@ -504,8 +498,6 @@ final class AppGenerator
         return $this;
     }
 
-    /**
-     */
     public function place(self $image, int|string $left = 0, int|string $top = 0, int $opacity = 100): self
     {
         $opacity = max(0, min(100, $opacity));
@@ -722,44 +714,6 @@ final class AppGenerator
         }
     }
 
-    /**
-     * Dočasný GD bridge kvůli zpětné kompatibilitě.
-     *
-     * @param array<int, mixed> $args
-     */
-    public function __call(string $name, array $args): mixed
-    {
-        $function = 'image' . $name;
-
-        if (!function_exists($function)) {
-            throw new LogicException(sprintf('Call to undefined method: %s::%s()', self::class, $name));
-        }
-
-        foreach ($args as $key => $value) {
-            if ($value instanceof self) {
-                $args[$key] = $value->getImageResource();
-
-                continue;
-            }
-
-            if (self::isRgbArray($value)) {
-                $args[$key] = GdImageOperations::allocateAlpha(
-                    $this->image,
-                    $value['red'],
-                    $value['green'],
-                    $value['blue'],
-                    $value['alpha'] ?? 0,
-                );
-            }
-        }
-
-        $result = $function($this->image, ...$args);
-
-        return $result instanceof GdImage
-            ? $this->setImageResource($result)
-            : $result;
-    }
-
     public function __clone()
     {
         $width = $this->getWidth();
@@ -901,19 +855,6 @@ final class AppGenerator
         }
 
         return (float) $value;
-    }
-
-    /**
-     * @phpstan-assert-if-true array{red: int, green: int, blue: int, alpha?: int} $value
-     */
-    private static function isRgbArray(mixed $value): bool
-    {
-        return is_array($value)
-            && isset($value['red'], $value['green'], $value['blue'])
-            && is_int($value['red'])
-            && is_int($value['green'])
-            && is_int($value['blue'])
-            && (!isset($value['alpha']) || is_int($value['alpha']));
     }
 
     private static function capture(Closure $callback): string
