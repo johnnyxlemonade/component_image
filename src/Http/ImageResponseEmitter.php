@@ -6,12 +6,12 @@ namespace Lemonade\Image\Http;
 
 use DateTimeImmutable;
 use Lemonade\Image\Exceptions\Image\ImageRenderException;
-
 use Lemonade\Image\Generator\AppGenerator;
 use Lemonade\Image\ImageResult;
 
 use function fclose;
 use function feof;
+use function filemtime;
 use function filesize;
 use function flush;
 use function fopen;
@@ -79,10 +79,12 @@ final class ImageResponseEmitter
     public function sendBinary(
         string $content,
         ?int $type = null,
+        ?int $lastModified = null,
     ): never {
         $this->sendHeader(
             type: $type,
             size: strlen($content),
+            lastModified: $lastModified,
         );
 
         echo $content;
@@ -99,6 +101,7 @@ final class ImageResponseEmitter
         $this->sendHeader(
             type: $type,
             size: $size,
+            lastModified: $this->getFileMTime($file),
         );
 
         $handle = @fopen($file, 'rb');
@@ -129,8 +132,11 @@ final class ImageResponseEmitter
         exit;
     }
 
-    public function sendHeader(?int $type = null, int $size = 0): void
-    {
+    public function sendHeader(
+        ?int $type = null,
+        int $size = 0,
+        ?int $lastModified = null,
+    ): void {
         $lifetime = self::CACHE_LIFETIME;
 
         $now = new DateTimeImmutable();
@@ -149,13 +155,8 @@ final class ImageResponseEmitter
             HttpResponseHeaders::setContentLength($size);
         }
 
-        $serverTime = (int) ServerRequest::get(
-            key: 'REQUEST_TIME',
-            default: (string) time(),
-        );
-
         HttpResponseHeaders::setLastModified(
-            timestamp: $serverTime,
+            timestamp: $lastModified ?? $this->getRequestTime(),
             code: 200,
         );
     }
@@ -163,5 +164,24 @@ final class ImageResponseEmitter
     public function sendNotModified(): void
     {
         HttpResponseHeaders::setNotModified();
+    }
+
+    private function getFileMTime(string $file): ?int
+    {
+        $time = @filemtime($file);
+
+        if ($time === false) {
+            return null;
+        }
+
+        return $time;
+    }
+
+    private function getRequestTime(): int
+    {
+        return (int) ServerRequest::get(
+            key: 'REQUEST_TIME',
+            default: (string) time(),
+        );
     }
 }
