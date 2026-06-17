@@ -16,6 +16,17 @@ use function substr;
 
 /**
  * Holds resolved source, cache and fallback paths for one image request.
+ *
+ * Combines directory resolution and image options to compute deterministic
+ * source and cache filenames used during image processing.
+ *
+ * @package     Lemonade
+ * @subpackage  Image\Context
+ * @category    Context
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
  */
 final class ImageFileContext
 {

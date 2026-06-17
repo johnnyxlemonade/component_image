@@ -12,7 +12,18 @@ use Lemonade\Image\ImageResult;
 use Throwable;
 
 /**
- * Handles filesystem operations related to generated image cache files.
+ * Stores generated image variants and fallback images in filesystem cache.
+ *
+ * Treats cache writes and cleanup as best-effort operations so cache failures
+ * do not prevent image responses from being emitted.
+ *
+ * @package     Lemonade
+ * @subpackage  Image\Cache
+ * @category    Cache
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
  */
 final class ImageCacheStorage
 {

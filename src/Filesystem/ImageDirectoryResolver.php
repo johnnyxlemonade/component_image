@@ -20,6 +20,17 @@ use const STR_PAD_LEFT;
 
 /**
  * Resolves storage and cache directories for generated image files.
+ *
+ * Builds deterministic storage, cache and fallback cache paths from request
+ * identifiers and storage configuration.
+ *
+ * @package     Lemonade
+ * @subpackage  Image\Filesystem
+ * @category    Resolver
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
  */
 final class ImageDirectoryResolver
 {

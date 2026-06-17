@@ -24,6 +24,20 @@ use function ob_get_clean;
 use function ob_start;
 use function round;
 
+/**
+ * Generates resized image variants and fallback placeholders.
+ *
+ * Applies parsed image options to source images and returns generated image
+ * results without handling cache storage or HTTP response output.
+ *
+ * @package     Lemonade
+ * @subpackage  Image\Generator
+ * @category    Generator
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
+ */
 final class ImageGenerator
 {
     private const CANVAS_SCALE_NORMAL = 0.75;

@@ -15,7 +15,18 @@ use function substr;
 use function trim;
 
 /**
- * Represents an RGB color value and provides normalized GD-compatible output.
+ * Represents an RGB color value.
+ *
+ * Parses hexadecimal color input and exposes normalized GD-compatible RGB
+ * channel values.
+ *
+ * @package     Lemonade
+ * @subpackage  Image\Value
+ * @category    Value Object
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
  */
 final class RgbColor implements ToArrayInterface
 {

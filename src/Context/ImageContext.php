@@ -9,7 +9,18 @@ use Lemonade\Image\Options\ImageOptionsDTO;
 use Lemonade\Image\Utils\FileSystem;
 
 /**
- * Holds runtime state for one image request.
+ * Holds runtime context for one image request.
+ *
+ * Exposes resolved file paths, parsed options, filesystem access and directory
+ * metadata to application services involved in request processing.
+ *
+ * @package     Lemonade
+ * @subpackage  Image\Context
+ * @category    Context
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
  */
 final class ImageContext
 {

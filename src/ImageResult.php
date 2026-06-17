@@ -7,7 +7,18 @@ namespace Lemonade\Image;
 use Lemonade\Image\Generator\AppGenerator;
 
 /**
- * Carries a generated image together with its output metadata.
+ * Carries a generated image with output metadata.
+ *
+ * Groups the generated image instance, output type and quality value so cache
+ * storage and response emitters can handle rendering consistently.
+ *
+ * @package     Lemonade
+ * @subpackage  Image
+ * @category    DTO
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
  */
 final class ImageResult
 {

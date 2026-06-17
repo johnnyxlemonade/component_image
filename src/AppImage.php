@@ -7,9 +7,18 @@ namespace Lemonade\Image;
 use Lemonade\Image\Generator\ImageRequest;
 
 /**
- * Backward-compatible facade for framework integration.
+ * Provides the backward-compatible image component entrypoint.
  *
- * New code should prefer AppImageFactory + ImageApplication.
+ * Keeps the legacy static integration API while delegating request handling
+ * to the modern application factory and runtime workflow.
+ *
+ * @package     Lemonade
+ * @subpackage  Image
+ * @category    Facade
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
  */
 final class AppImage
 {

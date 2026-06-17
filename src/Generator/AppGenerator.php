@@ -40,20 +40,18 @@ use function round;
 use function sprintf;
 
 /**
- * Provides GD-based image manipulation and output generation.
+ * Wraps low-level GD image operations.
  *
- * Supports loading, resizing, cropping, placing, rendering and saving images
- * in JPEG, PNG, GIF and WEBP formats.
+ * Provides image loading, resizing, rendering and saving operations while
+ * converting GD failures into typed component exceptions.
  *
  * @package     Lemonade
- * @subpackage  Image
- * @category    Image
+ * @subpackage  Image\Generator
+ * @category    Generator
  * @link        https://lemonadeframework.cz
  * @author      Honza Mudrak <honzamudrak@gmail.com>
  * @license     MIT
  * @since       1.0.0
- *
- * @see GdImageOperations
  *
  * @property-read int $width
  * @property-read int $height

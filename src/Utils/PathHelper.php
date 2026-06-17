@@ -16,9 +16,18 @@ use function trim;
 use const DIRECTORY_SEPARATOR;
 
 /**
- * Small helper for building normalized filesystem paths.
+ * Builds normalized filesystem paths.
  *
- * @internal
+ * Joins path segments while preserving relative, absolute and platform-specific
+ * path prefixes.
+ *
+ * @package     Lemonade
+ * @subpackage  Image\Utils
+ * @category    Utility
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
  */
 final class PathHelper
 {

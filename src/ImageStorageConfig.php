@@ -7,7 +7,18 @@ namespace Lemonade\Image;
 use Lemonade\Image\Utils\PathHelper;
 
 /**
- * Defines filesystem layout for source, cache and fallback image files.
+ * Defines filesystem layout for image storage and cache paths.
+ *
+ * Provides configurable base directories and fallback cache identifiers used
+ * by directory resolvers when building request-specific filesystem paths.
+ *
+ * @package     Lemonade
+ * @subpackage  Image
+ * @category    Configuration
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
  */
 final class ImageStorageConfig
 {

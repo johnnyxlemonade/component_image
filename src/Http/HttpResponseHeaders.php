@@ -9,6 +9,17 @@ use function header;
 
 /**
  * Sends HTTP headers used by image responses and cache handling.
+ *
+ * Centralizes response header output for content metadata, cache lifetime,
+ * last-modified handling and 304 Not Modified responses.
+ *
+ * @package     Lemonade
+ * @subpackage  Image\Http
+ * @category    HTTP
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
  */
 final class HttpResponseHeaders
 {

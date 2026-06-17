@@ -17,7 +17,16 @@ use function time;
 /**
  * Emits HTTP image responses.
  *
- * This class is responsible only for headers and response body output.
+ * Converts generated image results into binary HTTP responses including
+ * cache headers, content type and content length metadata.
+ *
+ * @package     Lemonade
+ * @subpackage  Image\Http
+ * @category    HTTP
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
  */
 final class ImageResponseEmitter
 {

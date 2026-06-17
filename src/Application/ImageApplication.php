@@ -13,7 +13,18 @@ use Lemonade\Image\Http\ImageResponseEmitter;
 use Throwable;
 
 /**
- * Handles one image request.
+ * Coordinates the image request workflow.
+ *
+ * Resolves browser cache, filesystem cache, source generation and fallback
+ * response handling for a single image request.
+ *
+ * @package     Lemonade
+ * @subpackage  Image\Application
+ * @category    Application
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
  */
 final class ImageApplication
 {

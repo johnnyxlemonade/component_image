@@ -21,7 +21,16 @@ use Lemonade\Image\Utils\FileSystem;
 /**
  * Creates the default runtime graph for image request handling.
  *
- * This factory is responsible for wiring low-level providers together.
+ * Wires request context, cache handling, generation, filesystem and response
+ * services into a ready-to-run image application instance.
+ *
+ * @package     Lemonade
+ * @subpackage  Image
+ * @category    Factory
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
  */
 final class AppImageFactory
 {

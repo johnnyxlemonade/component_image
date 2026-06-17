@@ -17,6 +17,17 @@ use function strtotime;
 
 /**
  * Handles browser and filesystem cache shortcuts for image responses.
+ *
+ * Resolves cache freshness, emits 304 responses and serves existing cached
+ * image binaries when a valid cache file is available.
+ *
+ * @package     Lemonade
+ * @subpackage  Image\Cache
+ * @category    Cache
+ * @link        https://lemonadeframework.cz
+ * @author      Honza Mudrak <honzamudrak@gmail.com>
+ * @license     MIT
+ * @since       1.0.0
  */
 final class ImageCacheResponder
 {
