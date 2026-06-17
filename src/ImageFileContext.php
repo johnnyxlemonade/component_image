@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Lemonade\Image;
 
-use Lemonade\Image\Providers\DirectoryProvider;
 use Lemonade\Image\Utils\FileSystem;
 
 use function pathinfo;
@@ -26,7 +25,7 @@ final class ImageFileContext
     private string $missingWebp;
 
     public function __construct(
-        private readonly DirectoryProvider $directory,
+        private readonly ImageDirectoryResolver $directory,
         ImageOptionsDTO $options,
         private readonly FileSystem $filesystem,
         ?string $file = null,
@@ -88,7 +87,7 @@ final class ImageFileContext
         );
     }
 
-    public function getDirectory(): DirectoryProvider
+    public function getDirectory(): ImageDirectoryResolver
     {
         return $this->directory;
     }

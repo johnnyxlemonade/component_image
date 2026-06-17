@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Lemonade\Image;
 
-use Lemonade\Image\Providers\DirectoryProvider;
 use Lemonade\Image\Utils\FileSystem;
 
 /**
@@ -34,7 +33,7 @@ final class ImageContext
         );
     }
 
-    public function getDirectory(): DirectoryProvider
+    public function getDirectory(): ImageDirectoryResolver
     {
         return $this->file->getDirectory();
     }
