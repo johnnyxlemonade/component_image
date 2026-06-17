@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Lemonade\Image;
 
 use Lemonade\Image\Providers\ServerProvider;
-use Lemonade\Image\Providers\WebpProvider;
 
 use function file_get_contents;
 use function filemtime;
@@ -99,14 +98,14 @@ final class ImageCacheResponder
 
     private function resolveCacheFile(ImageFileContext $file): string
     {
-        return WebpProvider::hasSupport()
+        return WebpSupportDetector::hasSupport()
             ? $file->getCacheWebp()
             : $file->getCacheFile();
     }
 
     private function resolveOutputType(string $file): ?int
     {
-        if (WebpProvider::hasSupport()) {
+        if (WebpSupportDetector::hasSupport()) {
             return AppGenerator::WEBP;
         }
 

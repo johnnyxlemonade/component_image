@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Lemonade\Image;
 
 use Lemonade\Image\Exceptions\IOException;
-use Lemonade\Image\Providers\WebpProvider;
 
 /**
  * Handles filesystem operations related to generated image cache files.
@@ -48,7 +47,7 @@ final class ImageCacheStorage
         $quality = $result->getQuality();
         $type = $result->getType();
 
-        if (!WebpProvider::hasSupport()) {
+        if (!WebpSupportDetector::hasSupport()) {
             $image->save(
                 file: $cacheFile,
                 quality: $quality,

@@ -7,7 +7,6 @@ namespace Lemonade\Image;
 use Lemonade\Image\Exceptions\Image\ImagePlaceholderException;
 use Lemonade\Image\Exceptions\Image\ImageTypeException;
 use Lemonade\Image\Providers\ColorProvider;
-use Lemonade\Image\Providers\WebpProvider;
 
 use function imagecolorallocatealpha;
 use function imagecreatetruecolor;
@@ -55,7 +54,7 @@ final class ImageGenerator
     {
         $options = $file->getOptions();
 
-        $type = WebpProvider::hasSupport()
+        $type = WebpSupportDetector::hasSupport()
             ? AppGenerator::WEBP
             : AppGenerator::PNG;
 
