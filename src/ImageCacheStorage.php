@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Lemonade\Image;
 
-use Lemonade\Image\Exceptions\Image\ImageCacheException;
 use Lemonade\Image\Exceptions\IOException;
 use Lemonade\Image\Providers\WebpProvider;
 
@@ -16,7 +15,9 @@ final class ImageCacheStorage
     public function createDirectoryForFile(ImageContext $context, string $file): void
     {
         try {
-            $context->getFilesystem()->createDirForFile($file);
+            $context->getFilesystem()->createDirForFile(
+                file: $file,
+            );
         } catch (IOException) {
             // silent by design
         }
@@ -26,7 +27,7 @@ final class ImageCacheStorage
     {
         try {
             $context->getFilesystem()->delete(
-                $context->getDirectory()->getCache(),
+                path: $context->getDirectory()->getCache(),
             );
         } catch (IOException) {
             // silent by design

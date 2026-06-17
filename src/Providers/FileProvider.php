@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Lemonade\Image\Providers;
 
-use Lemonade\Image\AppGenerator;
-use Lemonade\Image\Exceptions\IOException;
 use Lemonade\Image\Utils\FileSystem;
 
 /**

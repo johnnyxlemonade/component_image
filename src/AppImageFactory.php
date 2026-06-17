@@ -6,7 +6,6 @@ namespace Lemonade\Image;
 
 use Lemonade\Image\Providers\DataProvider;
 use Lemonade\Image\Providers\DirectoryProvider;
-use Lemonade\Image\Providers\FileProvider;
 use Lemonade\Image\Utils\FileSystem;
 
 /**

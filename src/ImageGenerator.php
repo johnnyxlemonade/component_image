@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace Lemonade\Image;
 
 use Lemonade\Image\Exceptions\Image\ImagePlaceholderException;
-use Lemonade\Image\Exceptions\Image\ImageSourceException;
 use Lemonade\Image\Exceptions\Image\ImageTypeException;
 use Lemonade\Image\Providers\ColorProvider;
-use Lemonade\Image\Providers\FileProvider;
 use Lemonade\Image\Providers\WebpProvider;
 
 use function imagecolorallocatealpha;

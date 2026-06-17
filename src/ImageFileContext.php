@@ -14,7 +14,7 @@ use function sprintf;
 use function substr;
 
 /**
- * Holds resolved source, cache and fallback image paths for one request.
+ * Holds resolved source, cache and fallback paths for one image request.
  */
 final class ImageFileContext
 {
@@ -79,11 +79,13 @@ final class ImageFileContext
     {
         $info = pathinfo($file);
 
-        $filename = ($info['filename'] ?? '') !== ''
+        $filename = isset($info['filename']) && $info['filename'] !== ''
             ? $info['filename']
             : 'missing';
 
-        $extension = $info['extension'] ?? 'png';
+        $extension = isset($info['extension']) && $info['extension'] !== ''
+            ? $info['extension']
+            : 'png';
 
         $this->sourceFile = sprintf(
             '%s/%s.%s',

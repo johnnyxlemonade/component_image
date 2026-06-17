@@ -9,7 +9,7 @@ use Lemonade\Image\Providers\DirectoryProvider;
 use Lemonade\Image\Utils\FileSystem;
 
 /**
- * Holds runtime context for one image request.
+ * Holds runtime state for one image request.
  */
 final class ImageContext
 {
