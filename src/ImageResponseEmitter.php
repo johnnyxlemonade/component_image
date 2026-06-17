@@ -7,7 +7,6 @@ namespace Lemonade\Image;
 use DateTimeImmutable;
 use Lemonade\Image\Exceptions\Image\ImageRenderException;
 use Lemonade\Image\Providers\ServerHeaderProvider;
-use Lemonade\Image\Providers\ServerProvider;
 
 use function strlen;
 use function strtotime;
@@ -91,7 +90,7 @@ final class ImageResponseEmitter
             ServerHeaderProvider::setContentLength($size);
         }
 
-        $ifModifiedSince = ServerProvider::get('HTTP_IF_MODIFIED_SINCE');
+        $ifModifiedSince = ServerRequest::get('HTTP_IF_MODIFIED_SINCE');
         $parsedClientTime = $ifModifiedSince !== ''
             ? strtotime($ifModifiedSince)
             : false;
@@ -100,7 +99,7 @@ final class ImageResponseEmitter
             ? 0
             : $parsedClientTime;
 
-        $serverTime = (int) ServerProvider::get(
+        $serverTime = (int) ServerRequest::get(
             'REQUEST_TIME',
             (string) time(),
         );

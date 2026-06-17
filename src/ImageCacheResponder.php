@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Lemonade\Image;
 
-use Lemonade\Image\Providers\ServerProvider;
-
 use function file_get_contents;
 use function filemtime;
 use function strtotime;
@@ -22,12 +20,12 @@ final class ImageCacheResponder
 
     public function sendBrowserCacheIfFresh(ImageFileContext $file): bool
     {
-        if (!ServerProvider::has('HTTP_IF_MODIFIED_SINCE')) {
+        if (!ServerRequest::has('HTTP_IF_MODIFIED_SINCE')) {
             return false;
         }
 
         $clientTime = (int) strtotime(
-            ServerProvider::get('HTTP_IF_MODIFIED_SINCE'),
+            ServerRequest::get('HTTP_IF_MODIFIED_SINCE'),
         );
 
         if (

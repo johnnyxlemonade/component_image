@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Lemonade\Image\Providers;
 
+use Lemonade\Image\ServerRequest;
+
 /**
  * Sends HTTP headers used by image responses and cache handling.
  *
@@ -55,7 +57,7 @@ final class ServerHeaderProvider
      */
     public static function setNotModified(): void
     {
-        $protocol = ServerProvider::get('SERVER_PROTOCOL', 'HTTP/1.1');
+        $protocol = ServerRequest::get('SERVER_PROTOCOL', 'HTTP/1.1');
 
         header('Connection: close');
         header('X-Component: Lemonade Image');
