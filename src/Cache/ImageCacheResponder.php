@@ -14,20 +14,6 @@ use Lemonade\Image\Http\ServerRequest;
 use function filemtime;
 use function strtotime;
 
-/**
- * Handles browser and filesystem cache shortcuts for image responses.
- *
- * Resolves cache freshness, emits 304 responses and serves existing cached
- * image binaries when a valid cache file is available.
- *
- * @package     Lemonade
- * @subpackage  Image\Cache
- * @category    Cache
- * @link        https://lemonadeframework.cz
- * @author      Honza Mudrak <honzamudrak@gmail.com>
- * @license     MIT
- * @since       1.0.0
- */
 final class ImageCacheResponder
 {
     public function __construct(
@@ -64,8 +50,18 @@ final class ImageCacheResponder
             return false;
         }
 
-        $cacheTime = (int) @filemtime($cacheFile);
-        if ($cacheTime === 0 || $clientTime < $cacheTime) {
+        if (!$this->isCacheFresh(
+            sourceFile: $file->getSourceFile(),
+            cacheFile: $cacheFile,
+        )) {
+            return false;
+        }
+
+        $cacheTime = $this->getFileMTime(
+            file: $cacheFile,
+        );
+
+        if ($cacheTime === null || $clientTime < $cacheTime) {
             return false;
         }
 
@@ -88,6 +84,13 @@ final class ImageCacheResponder
 
         if (!$this->fileInspector->exists(
             file: $cacheFile,
+        )) {
+            return false;
+        }
+
+        if (!$this->isCacheFresh(
+            sourceFile: $file->getSourceFile(),
+            cacheFile: $cacheFile,
         )) {
             return false;
         }
@@ -122,5 +125,33 @@ final class ImageCacheResponder
         return AppGenerator::detectTypeFromFile(
             file: $file,
         );
+    }
+
+    private function isCacheFresh(string $sourceFile, string $cacheFile): bool
+    {
+        $sourceTime = $this->getFileMTime(
+            file: $sourceFile,
+        );
+
+        $cacheTime = $this->getFileMTime(
+            file: $cacheFile,
+        );
+
+        if ($sourceTime === null || $cacheTime === null) {
+            return false;
+        }
+
+        return $cacheTime >= $sourceTime;
+    }
+
+    private function getFileMTime(string $file): ?int
+    {
+        $time = @filemtime($file);
+
+        if ($time === false) {
+            return null;
+        }
+
+        return $time;
     }
 }
