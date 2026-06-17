@@ -11,7 +11,6 @@ use Lemonade\Image\Generator\AppGenerator;
 use Lemonade\Image\ImageResult;
 
 use function strlen;
-use function strtotime;
 use function time;
 
 /**
@@ -101,27 +100,15 @@ final class ImageResponseEmitter
             HttpResponseHeaders::setContentLength($size);
         }
 
-        $ifModifiedSince = ServerRequest::get('HTTP_IF_MODIFIED_SINCE');
-        $parsedClientTime = $ifModifiedSince !== ''
-            ? strtotime($ifModifiedSince)
-            : false;
-
-        $clientTime = $parsedClientTime === false
-            ? 0
-            : $parsedClientTime;
-
         $serverTime = (int) ServerRequest::get(
-            'REQUEST_TIME',
-            (string) time(),
+            key: 'REQUEST_TIME',
+            default: (string) time(),
         );
 
-        if ($clientTime > ($serverTime - $lifetime)) {
-            HttpResponseHeaders::setLastModified($clientTime, 304);
-
-            return;
-        }
-
-        HttpResponseHeaders::setLastModified($serverTime, 200);
+        HttpResponseHeaders::setLastModified(
+            timestamp: $serverTime,
+            code: 200,
+        );
     }
 
     public function sendNotModified(): void
