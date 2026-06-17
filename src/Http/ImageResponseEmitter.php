@@ -10,6 +10,15 @@ use Lemonade\Image\Exceptions\Image\ImageRenderException;
 use Lemonade\Image\Generator\AppGenerator;
 use Lemonade\Image\ImageResult;
 
+use function fclose;
+use function feof;
+use function filesize;
+use function flush;
+use function fopen;
+use function fread;
+use function is_resource;
+use function ob_flush;
+use function ob_get_level;
 use function strlen;
 use function time;
 
@@ -77,6 +86,46 @@ final class ImageResponseEmitter
         );
 
         echo $content;
+        exit;
+    }
+
+    /**
+     * Emits a cached image file directly from disk in chunks.
+     */
+    public function sendFile(string $file, ?int $type = null): never
+    {
+        $size = (int) @filesize($file);
+
+        $this->sendHeader(
+            type: $type,
+            size: $size,
+        );
+
+        $handle = @fopen($file, 'rb');
+
+        if (!is_resource($handle)) {
+            throw ImageRenderException::failed();
+        }
+
+        while (!feof($handle)) {
+            $chunk = fread($handle, 8192);
+
+            if ($chunk === false) {
+                fclose($handle);
+
+                throw ImageRenderException::failed();
+            }
+
+            echo $chunk;
+
+            if (ob_get_level() > 0) {
+                ob_flush();
+            }
+
+            flush();
+        }
+
+        fclose($handle);
         exit;
     }
 

@@ -11,7 +11,6 @@ use Lemonade\Image\Generator\AppGenerator;
 use Lemonade\Image\Http\ImageResponseEmitter;
 use Lemonade\Image\Http\ServerRequest;
 
-use function file_get_contents;
 use function filemtime;
 use function strtotime;
 
@@ -93,11 +92,6 @@ final class ImageCacheResponder
             return false;
         }
 
-        $content = file_get_contents($cacheFile);
-        if ($content === false) {
-            return false;
-        }
-
         $type = $this->resolveOutputType(
             file: $cacheFile,
         );
@@ -106,8 +100,8 @@ final class ImageCacheResponder
             return false;
         }
 
-        $this->responseEmitter->sendBinary(
-            content: $content,
+        $this->responseEmitter->sendFile(
+            file: $cacheFile,
             type: $type,
         );
     }
