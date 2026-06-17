@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Lemonade\Image\Filesystem;
 
+use Lemonade\Image\Exceptions\InvalidStateException;
 use Lemonade\Image\ImageStorageConfig;
 use Lemonade\Image\Utils\PathHelper;
 
@@ -11,6 +12,7 @@ use function array_key_exists;
 use function chunk_split;
 use function dechex;
 use function is_string;
+use function preg_match;
 use function rtrim;
 use function sprintf;
 use function str_pad;
@@ -100,6 +102,12 @@ final class ImageDirectoryResolver
         string|int|null $moduleId = null,
         string|int|null $artId = null,
     ): void {
+        $moduleDirectory = $this->resolvePathSegment(
+            value: $moduleId,
+            fallback: '0',
+            name: 'moduleId',
+        );
+
         $directoryId = $this->resolveStorageTypeId(
             typeId: $storageTypeId,
         );
@@ -110,14 +118,14 @@ final class ImageDirectoryResolver
 
         $this->storageDirectory = PathHelper::join(
             $this->config->getStorageBase(),
-            (string) ($moduleId ?? '0'),
+            $moduleDirectory,
             $directoryId,
             $structure,
         );
 
         $this->cacheDirectory = PathHelper::join(
             $this->config->getCacheBase(),
-            (string) ($moduleId ?? '0'),
+            $moduleDirectory,
             $directoryId,
             $structure,
         );
@@ -125,10 +133,16 @@ final class ImageDirectoryResolver
 
     private function buildDirectoryStructure(string|int|null $artId): string
     {
+        $normalizedArtId = $this->resolveNumericId(
+            value: $artId,
+            fallback: 0,
+            name: 'artId',
+        );
+
         return rtrim(
             chunk_split(
                 str_pad(
-                    dechex((int) $artId),
+                    dechex($normalizedArtId),
                     $this->level,
                     '0',
                     STR_PAD_LEFT,
@@ -150,6 +164,67 @@ final class ImageDirectoryResolver
             return (string) self::STORAGE_TYPE_MAP[$typeId];
         }
 
-        return (string) $typeId;
+        return $this->resolvePathSegment(
+            value: $typeId,
+            fallback: '0',
+            name: 'storageTypeId',
+        );
+    }
+
+    private function resolvePathSegment(
+        string|int|null $value,
+        string $fallback,
+        string $name,
+    ): string {
+        if ($value === null || $value === '') {
+            return $fallback;
+        }
+
+        $segment = (string) $value;
+
+        if (preg_match('~^[a-zA-Z0-9_-]+$~', $segment) !== 1) {
+            throw new InvalidStateException(
+                sprintf(
+                    'Invalid image path segment "%s".',
+                    $name,
+                ),
+            );
+        }
+
+        return $segment;
+    }
+
+    private function resolveNumericId(
+        string|int|null $value,
+        int $fallback,
+        string $name,
+    ): int {
+        if ($value === null || $value === '') {
+            return $fallback;
+        }
+
+        if (is_int($value)) {
+            if ($value < 0) {
+                throw new InvalidStateException(
+                    sprintf(
+                        'Invalid negative image identifier "%s".',
+                        $name,
+                    ),
+                );
+            }
+
+            return $value;
+        }
+
+        if (preg_match('~^\d+$~', $value) !== 1) {
+            throw new InvalidStateException(
+                sprintf(
+                    'Invalid image numeric identifier "%s".',
+                    $name,
+                ),
+            );
+        }
+
+        return (int) $value;
     }
 }
