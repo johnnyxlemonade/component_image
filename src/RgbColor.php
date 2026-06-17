@@ -2,22 +2,22 @@
 
 declare(strict_types=1);
 
-namespace Lemonade\Image\Providers;
+namespace Lemonade\Image;
 
 use Lemonade\Image\Interfaces\ToArrayInterface;
 
+use function hexdec;
+use function ltrim;
+use function max;
+use function min;
+use function preg_match;
+use function substr;
+use function trim;
+
 /**
- * Converts color values into normalized RGB array structures.
- *
- * @package     Lemonade
- * @subpackage  Image\Providers
- * @category    Provider
- * @link        https://lemonadeframework.cz
- * @author      Honza Mudrak <honzamudrak@gmail.com>
- * @license     MIT
- * @since       1.0.0
+ * Represents an RGB color value and provides normalized GD-compatible output.
  */
-final class ColorProvider implements ToArrayInterface
+final class RgbColor implements ToArrayInterface
 {
     public function __construct(
         private readonly int $red,
@@ -26,8 +26,6 @@ final class ColorProvider implements ToArrayInterface
     ) {}
 
     /**
-     * Vrátí RGB hodnoty ve formátu pro GD (0–255).
-     *
      * @return array{red: int, green: int, blue: int}
      */
     public function toArray(): array
@@ -39,10 +37,7 @@ final class ColorProvider implements ToArrayInterface
         ];
     }
 
-    /**
-     * Vytvoří barvu z hex zápisu (#RRGGBB nebo RRGGBB).
-     */
-    public static function hexRgb(string $hex): self
+    public static function fromHex(string $hex): self
     {
         $hex = ltrim(trim($hex), '#');
 
@@ -51,15 +46,12 @@ final class ColorProvider implements ToArrayInterface
         }
 
         return new self(
-            (int) hexdec(substr($hex, 0, 2)),
-            (int) hexdec(substr($hex, 2, 2)),
-            (int) hexdec(substr($hex, 4, 2)),
+            red: (int) hexdec(substr($hex, 0, 2)),
+            green: (int) hexdec(substr($hex, 2, 2)),
+            blue: (int) hexdec(substr($hex, 4, 2)),
         );
     }
 
-    /**
-     * Omezí hodnotu do rozsahu 0–255.
-     */
     private static function clamp(int $value): int
     {
         return max(0, min(255, $value));

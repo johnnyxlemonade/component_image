@@ -6,7 +6,6 @@ namespace Lemonade\Image;
 
 use Lemonade\Image\Exceptions\Image\ImagePlaceholderException;
 use Lemonade\Image\Exceptions\Image\ImageTypeException;
-use Lemonade\Image\Providers\ColorProvider;
 
 use function imagecolorallocatealpha;
 use function imagecreatetruecolor;
@@ -131,7 +130,7 @@ final class ImageGenerator
         $image = AppGenerator::fromBlank(
             width: $canvasWidth,
             height: $canvasHeight,
-            color: ColorProvider::hexRgb($options->getCanvasColor())->toArray(),
+            color: RgbColor::fromHex($options->getCanvasColor())->toArray(),
         );
 
         $image->saveAlpha(
@@ -225,7 +224,7 @@ final class ImageGenerator
             shrinkOnly: true,
         );
 
-        $rgb = ColorProvider::hexRgb($canvas)->toArray();
+        $rgb = RgbColor::fromHex($canvas)->toArray();
 
         $image = AppGenerator::fromBlank(
             width: $width,
