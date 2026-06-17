@@ -59,6 +59,7 @@ composer require lemonade/component_image:dev-master
 - Typed component exceptions
 - PHPUnit test suite
 - PHPStan level 10 configuration
+- Memory-efficient streaming from cache in 8kB chunks with output buffer flushing
 
 ## Basic usage
 
@@ -330,7 +331,7 @@ Fallback images are cached separately by option hash.
 
 The component emits image responses directly.
 
-Cached image files are streamed from disk in chunks. Generated images are rendered to binary output and emitted with cache headers, content type and content length when available.
+Cached image files are streamed directly from disk in 8kB chunks with active output buffer flushing, ensuring a near-zero memory footprint even under heavy load. Generated images are rendered to binary output and emitted with cache headers, content type, and content length metadata.
 
 Supported output MIME types:
 
