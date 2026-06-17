@@ -81,7 +81,7 @@
       "@composer validate --strict"
     ],
     "stan": [
-      "@php vendor/bin/phpstan analyse -c phpstan.neon.dist --memory-limit=1G"
+      "@php vendor/bin/phpstan analyse -c phpstan.neon.dist --memory-limit=16G"
     ],
     "stan:ci": [
       "@php vendor/bin/phpstan analyse -c phpstan.neon.dist --no-progress --error-format=github --memory-limit=1G"
