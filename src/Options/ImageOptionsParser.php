@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Lemonade\Image\Options;
 
+use Lemonade\Image\Options\Config\ImageOptionsParserConfig;
+
 use function ctype_digit;
 use function ctype_xdigit;
 use function explode;
-use function in_array;
 use function mb_strlen;
 use function mb_substr;
 use function preg_match;
@@ -28,53 +29,22 @@ use function preg_match;
  */
 final class ImageOptionsParser
 {
-    /**
-     * Fixed size presets for UI/content thumbnails.
-     * Values are defined in pixels and represent the 1× variant.
-     */
-    private const SIZE_PRESETS = [
-        'xss' => [32, 32],
-        'xs' => [48, 48],
-        'sm' => [96, 96],
-        'md' => [160, 160],
-        'lg' => [320, 320],
-        'xl' => [640, 640],
-    ];
-
-    /**
-     * Prevents extreme preset scale values.
-     */
-    private const MAX_PRESET_SCALE = 3;
-
-    private const DEFAULT_CANVAS = 'ffffff';
-    private const DEFAULT_QUALITY = 72;
-
-    private const MIN_QUALITY = 1;
-    private const MAX_QUALITY = 100;
+    private readonly ImageOptionsParserConfig $config;
 
     private ?int $width = null;
     private ?int $height = null;
-    private int $crop = 0;
-    private string $canvas = self::DEFAULT_CANVAS;
-    private int $quality = self::DEFAULT_QUALITY;
+    private ImageResizeMode $resizeMode = ImageResizeMode::Shrink;
+    private string $canvasColor;
+    private int $quality;
     private bool $missing = true;
-
-    private int $minWidth;
-    private int $minHeight;
-    private int $maxWidth;
-    private int $maxHeight;
 
     public function __construct(
         ?string $args = null,
-        int $minWidth = 50,
-        int $minHeight = 50,
-        int $maxWidth = 2560,
-        int $maxHeight = 2560,
+        ?ImageOptionsParserConfig $config = null,
     ) {
-        $this->minWidth = $minWidth;
-        $this->minHeight = $minHeight;
-        $this->maxWidth = $maxWidth;
-        $this->maxHeight = $maxHeight;
+        $this->config = $config ?? ImageOptionsParserConfig::createDefault();
+        $this->canvasColor = $this->config->getCanvas()->getDefaultColor();
+        $this->quality = $this->config->getQuality()->getDefaultQuality();
 
         $this->parse($args);
         $this->applyLimits();
@@ -125,21 +95,21 @@ final class ImageOptionsParser
             return false;
         }
 
-        $preset = $matches[1];
+        $presetCode = $matches[1];
         $scale = isset($matches[2]) ? (int) $matches[2] : 1;
+        $presetConfig = $this->config->getSizePresets();
+        $preset = $presetConfig->getPresets()->get($presetCode);
 
         if (
-            !isset(self::SIZE_PRESETS[$preset]) ||
+            $preset === null ||
             $scale < 1 ||
-            $scale > self::MAX_PRESET_SCALE
+            $scale > $presetConfig->getMaxScale()
         ) {
             return false;
         }
 
-        [$width, $height] = self::SIZE_PRESETS[$preset];
-
-        $this->width = $width * $scale;
-        $this->height = $height * $scale;
+        $this->width = $preset->getWidth() * $scale;
+        $this->height = $preset->getHeight() * $scale;
 
         return true;
     }
@@ -156,7 +126,7 @@ final class ImageOptionsParser
             return false;
         }
 
-        $this->crop = -1;
+        $this->resizeMode = ImageResizeMode::Original;
         $this->width = null;
         $this->height = null;
 
@@ -177,9 +147,9 @@ final class ImageOptionsParser
             'w' => $this->applyWidth($value),
             'h' => $this->applyHeight($value),
             'q' => $this->applyQuality($value),
-            'c' => $this->applyCanvas($value),
+            'c' => $this->applyCanvasColor($value),
             'e' => $this->applyMissing($value),
-            'z' => $this->applyCrop($value),
+            'z' => $this->applyResizeMode($value),
             default => null,
         };
     }
@@ -220,26 +190,27 @@ final class ImageOptionsParser
             return;
         }
 
+        $qualityConfig = $this->config->getQuality();
         $quality = (int) $value;
 
-        if ($quality < self::MIN_QUALITY) {
-            $quality = self::MIN_QUALITY;
+        if ($quality < $qualityConfig->getMinQuality()) {
+            $quality = $qualityConfig->getMinQuality();
         }
 
-        if ($quality > self::MAX_QUALITY) {
-            $quality = self::MAX_QUALITY;
+        if ($quality > $qualityConfig->getMaxQuality()) {
+            $quality = $qualityConfig->getMaxQuality();
         }
 
         $this->quality = $quality;
     }
 
-    private function applyCanvas(string $value): void
+    private function applyCanvasColor(string $value): void
     {
         if (!ctype_xdigit($value) || mb_strlen($value) !== 6) {
             return;
         }
 
-        $this->canvas = $value;
+        $this->canvasColor = $value;
     }
 
     private function applyMissing(string $value): void
@@ -251,19 +222,19 @@ final class ImageOptionsParser
         $this->missing = $value === '1';
     }
 
-    private function applyCrop(string $value): void
+    private function applyResizeMode(string $value): void
     {
         if (!ctype_digit($value)) {
             return;
         }
 
-        $crop = (int) $value;
+        $resizeMode = ImageResizeMode::tryFrom((int) $value);
 
-        if (!in_array($crop, ImageResizeMode::supportedUrlValues(), true)) {
+        if ($resizeMode === null || !$resizeMode->isAllowedInUrl()) {
             return;
         }
 
-        $this->crop = $crop;
+        $this->resizeMode = $resizeMode;
     }
 
     /**
@@ -273,34 +244,36 @@ final class ImageOptionsParser
      */
     private function applyLimits(): void
     {
-        if ($this->crop === -1) {
+        if ($this->resizeMode === ImageResizeMode::Original) {
             return;
         }
 
+        $dimensions = $this->config->getDimensions();
+
         if ($this->width === null && $this->height === null) {
-            $this->width = $this->minWidth;
-            $this->height = $this->minHeight;
+            $this->width = $dimensions->getMinWidth();
+            $this->height = $dimensions->getMinHeight();
 
             return;
         }
 
         if ($this->width !== null) {
-            if ($this->width < $this->minWidth) {
-                $this->width = $this->minWidth;
+            if ($this->width < $dimensions->getMinWidth()) {
+                $this->width = $dimensions->getMinWidth();
             }
 
-            if ($this->width > $this->maxWidth) {
-                $this->width = $this->maxWidth;
+            if ($this->width > $dimensions->getMaxWidth()) {
+                $this->width = $dimensions->getMaxWidth();
             }
         }
 
         if ($this->height !== null) {
-            if ($this->height < $this->minHeight) {
-                $this->height = $this->minHeight;
+            if ($this->height < $dimensions->getMinHeight()) {
+                $this->height = $dimensions->getMinHeight();
             }
 
-            if ($this->height > $this->maxHeight) {
-                $this->height = $this->maxHeight;
+            if ($this->height > $dimensions->getMaxHeight()) {
+                $this->height = $dimensions->getMaxHeight();
             }
         }
     }
@@ -310,11 +283,10 @@ final class ImageOptionsParser
         return new ImageOptionsDTO(
             width: $this->width,
             height: $this->height,
-            resizeMode: ImageResizeMode::fromLegacyCrop($this->crop),
-            canvasColor: $this->canvas,
+            resizeMode: $this->resizeMode,
+            canvasColor: $this->canvasColor,
             quality: $this->quality,
             missing: $this->missing,
         );
     }
-
 }

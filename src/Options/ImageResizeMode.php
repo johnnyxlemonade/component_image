@@ -14,23 +14,11 @@ enum ImageResizeMode: int
     case FitWithBiggerCanvas = 4;
     case FitWithMaxCanvas = 5;
 
-    public static function fromLegacyCrop(int $crop): self
+    public function isAllowedInUrl(): bool
     {
-        return self::tryFrom($crop) ?? self::Shrink;
-    }
-
-    /**
-     * @return list<int>
-     */
-    public static function supportedUrlValues(): array
-    {
-        return [
-            self::Shrink->value,
-            self::FitWithCanvas->value,
-            self::Exact->value,
-            self::Fit->value,
-            self::FitWithBiggerCanvas->value,
-            self::FitWithMaxCanvas->value,
-        ];
+        return match ($this) {
+            self::Original => false,
+            default => true,
+        };
     }
 }

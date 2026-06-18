@@ -4,6 +4,13 @@ declare(strict_types=1);
 
 namespace Lemonade\Image\Tests\Unit\Options;
 
+use Lemonade\Image\Options\Config\ImageCanvasConfig;
+use Lemonade\Image\Options\Config\ImageDimensionConfig;
+use Lemonade\Image\Options\Config\ImageOptionsParserConfig;
+use Lemonade\Image\Options\Config\ImageQualityConfig;
+use Lemonade\Image\Options\Config\ImageSizePreset;
+use Lemonade\Image\Options\Config\ImageSizePresetCollection;
+use Lemonade\Image\Options\Config\ImageSizePresetConfig;
 use Lemonade\Image\Options\ImageOptionsDTO;
 use Lemonade\Image\Options\ImageOptionsParser;
 use Lemonade\Image\Options\ImageResizeMode;
@@ -153,5 +160,108 @@ final class ImageOptionsParserTest extends TestCase
         self::assertNotSame($options, $changed);
         self::assertSame(ImageResizeMode::Shrink, $options->getResizeMode());
         self::assertSame(ImageResizeMode::Fit, $changed->getResizeMode());
+    }
+
+    public function testUsesCustomSizePresetConfig(): void
+    {
+        $options = (new ImageOptionsParser(
+            args: 'card2',
+            config: new ImageOptionsParserConfig(
+                sizePresets: new ImageSizePresetConfig(
+                    presets: new ImageSizePresetCollection([
+                        ImageSizePreset::create(
+                            code: 'card',
+                            width: 600,
+                            height: 400,
+                        ),
+                    ]),
+                    maxScale: 2,
+                ),
+                canvas: new ImageCanvasConfig(),
+                quality: new ImageQualityConfig(),
+                dimensions: new ImageDimensionConfig(),
+            ),
+        ))->toDTO();
+
+        self::assertSame(1200, $options->getWidth());
+        self::assertSame(800, $options->getHeight());
+    }
+
+    public function testIgnoresCustomPresetScaleAboveConfiguredMaximum(): void
+    {
+        $options = (new ImageOptionsParser(
+            args: 'card3',
+            config: new ImageOptionsParserConfig(
+                sizePresets: new ImageSizePresetConfig(
+                    presets: new ImageSizePresetCollection([
+                        ImageSizePreset::create(
+                            code: 'card',
+                            width: 600,
+                            height: 400,
+                        ),
+                    ]),
+                    maxScale: 2,
+                ),
+                canvas: new ImageCanvasConfig(),
+                quality: new ImageQualityConfig(),
+                dimensions: new ImageDimensionConfig(
+                    minWidth: 100,
+                    minHeight: 80,
+                ),
+            ),
+        ))->toDTO();
+
+        self::assertSame(100, $options->getWidth());
+        self::assertSame(80, $options->getHeight());
+    }
+
+    public function testUsesCustomCanvasQualityAndDimensionConfig(): void
+    {
+        $options = (new ImageOptionsParser(
+            args: 'q150',
+            config: new ImageOptionsParserConfig(
+                sizePresets: ImageSizePresetConfig::createDefault(),
+                canvas: new ImageCanvasConfig(
+                    defaultColor: 'f5f5f5',
+                ),
+                quality: new ImageQualityConfig(
+                    defaultQuality: 80,
+                    minQuality: 10,
+                    maxQuality: 90,
+                ),
+                dimensions: new ImageDimensionConfig(
+                    minWidth: 100,
+                    minHeight: 80,
+                    maxWidth: 1200,
+                    maxHeight: 900,
+                ),
+            ),
+        ))->toDTO();
+
+        self::assertSame(100, $options->getWidth());
+        self::assertSame(80, $options->getHeight());
+        self::assertSame(90, $options->getQuality());
+        self::assertSame('f5f5f5', $options->getCanvasColor());
+    }
+
+    public function testAppliesCustomMaximumDimensions(): void
+    {
+        $options = (new ImageOptionsParser(
+            args: 'w2000-h1600',
+            config: new ImageOptionsParserConfig(
+                sizePresets: ImageSizePresetConfig::createDefault(),
+                canvas: new ImageCanvasConfig(),
+                quality: new ImageQualityConfig(),
+                dimensions: new ImageDimensionConfig(
+                    minWidth: 100,
+                    minHeight: 80,
+                    maxWidth: 1200,
+                    maxHeight: 900,
+                ),
+            ),
+        ))->toDTO();
+
+        self::assertSame(1200, $options->getWidth());
+        self::assertSame(900, $options->getHeight());
     }
 }
