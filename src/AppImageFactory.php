@@ -10,6 +10,7 @@ use Lemonade\Image\Cache\ImageCacheStorage;
 use Lemonade\Image\Context\ImageContext;
 use Lemonade\Image\Context\ImageFileContext;
 use Lemonade\Image\Detection\ImageFileInspector;
+use Lemonade\Image\Fallback\ImageFallbackConfig;
 use Lemonade\Image\Filesystem\ImageDirectoryResolver;
 use Lemonade\Image\Generator\ImageGenerator;
 use Lemonade\Image\Generator\ImageRequest;
@@ -45,6 +46,7 @@ final class AppImageFactory
     public function __construct(
         private readonly FileSystem $filesystem,
         private readonly ImageStorageConfig $storageConfig,
+        private readonly ImageFallbackConfig $fallbackConfig = new ImageFallbackConfig(),
     ) {}
 
     public function createApplication(ImageRequest $request): ImageApplication
@@ -65,6 +67,7 @@ final class AppImageFactory
                 storageConfig: $this->storageConfig,
             ),
             fileInspector: $fileInspector,
+            fallbackConfig: $this->fallbackConfig,
         );
     }
 
@@ -108,5 +111,4 @@ final class AppImageFactory
             artId: $request->getArtId(),
         );
     }
-
 }

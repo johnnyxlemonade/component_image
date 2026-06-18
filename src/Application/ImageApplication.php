@@ -8,6 +8,7 @@ use Lemonade\Image\Cache\ImageCacheResponder;
 use Lemonade\Image\Cache\ImageCacheStorage;
 use Lemonade\Image\Context\ImageContext;
 use Lemonade\Image\Detection\ImageFileInspector;
+use Lemonade\Image\Fallback\ImageFallbackConfig;
 use Lemonade\Image\Generator\ImageGenerator;
 use Lemonade\Image\Http\ImageHttpResponse;
 use Lemonade\Image\Http\ImageHttpResponseFactory;
@@ -36,6 +37,7 @@ final class ImageApplication
         private readonly ImageHttpResponseFactory $responseFactory,
         private readonly ImageGenerator $generator,
         private readonly ImageFileInspector $fileInspector,
+        private readonly ImageFallbackConfig $fallbackConfig = new ImageFallbackConfig(),
     ) {}
 
     public function handle(): ImageHttpResponse
@@ -91,8 +93,8 @@ final class ImageApplication
         $file = $this->context->getFile();
 
         $this->context->ensureFallbackSize(
-            width: 600,
-            height: 600,
+            width: $this->fallbackConfig->getDefaultWidth(),
+            height: $this->fallbackConfig->getDefaultHeight(),
         );
 
         $result = $this->generator->createFallback(
@@ -108,5 +110,4 @@ final class ImageApplication
             result: $result,
         );
     }
-
 }
