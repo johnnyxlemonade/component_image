@@ -9,6 +9,7 @@ use Lemonade\Image\Cache\ImageCacheStorage;
 use Lemonade\Image\Context\ImageContext;
 use Lemonade\Image\Detection\ImageFileInspector;
 use Lemonade\Image\Generator\ImageGenerator;
+use Lemonade\Image\Http\ImageHttpResponseFactory;
 use Lemonade\Image\Http\ImageResponseEmitter;
 use Throwable;
 
@@ -33,6 +34,7 @@ final class ImageApplication
         private readonly ImageCacheResponder $cacheResponder,
         private readonly ImageCacheStorage $cacheStorage,
         private readonly ImageResponseEmitter $responseEmitter,
+        private readonly ImageHttpResponseFactory $responseFactory,
         private readonly ImageGenerator $generator,
         private readonly ImageFileInspector $fileInspector,
     ) {}
@@ -88,8 +90,10 @@ final class ImageApplication
             result: $result,
         );
 
-        $this->responseEmitter->sendResult(
-            result: $result,
+        $this->responseEmitter->emit(
+            response: $this->responseFactory->fromResult(
+                result: $result,
+            ),
         );
     }
 
@@ -111,8 +115,10 @@ final class ImageApplication
             result: $result,
         );
 
-        $this->responseEmitter->sendResult(
-            result: $result,
+        $this->responseEmitter->emit(
+            response: $this->responseFactory->fromResult(
+                result: $result,
+            ),
         );
     }
 

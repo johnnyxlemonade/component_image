@@ -13,6 +13,7 @@ use Lemonade\Image\Detection\ImageFileInspector;
 use Lemonade\Image\Filesystem\ImageDirectoryResolver;
 use Lemonade\Image\Generator\ImageGenerator;
 use Lemonade\Image\Generator\ImageRequest;
+use Lemonade\Image\Http\ImageHttpResponseFactory;
 use Lemonade\Image\Http\ImageResponseEmitter;
 use Lemonade\Image\Options\ImageOptionsDTO;
 use Lemonade\Image\Options\ImageOptionsParser;
@@ -61,6 +62,7 @@ final class AppImageFactory
             ),
             cacheStorage: new ImageCacheStorage(),
             responseEmitter: $responseEmitter,
+            responseFactory: new ImageHttpResponseFactory(),
             generator: new ImageGenerator(
                 fileInspector: $fileInspector,
                 storageConfig: $this->storageConfig,
