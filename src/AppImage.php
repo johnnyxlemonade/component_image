@@ -7,10 +7,9 @@ namespace Lemonade\Image;
 use Lemonade\Image\Generator\ImageRequest;
 
 /**
- * Provides the backward-compatible image component entrypoint.
+ * Provides the image component entrypoint.
  *
- * Keeps the legacy static integration API while delegating request handling
- * to the modern application factory and runtime workflow.
+ * Delegates request handling to the application factory and runtime workflow.
  *
  * @package     Lemonade
  * @subpackage  Image
@@ -23,28 +22,10 @@ use Lemonade\Image\Generator\ImageRequest;
 final class AppImage
 {
     /**
-     * Legacy framework entrypoint.
-     *
-     * Parameter $storageTypId intentionally keeps the original name
-     * to avoid breaking named-argument calls.
+     * Emits an image response for a prepared image request.
      */
-    public static function factoryApp(
-        int $level,
-        string|int|null $storageTypId,
-        string|int|null $moduleId,
-        string|int|null $artId,
-        ?string $baseName,
-        ?string $args,
-    ): void {
-        $request = new ImageRequest(
-            level: $level,
-            storageTypeId: $storageTypId,
-            moduleId: $moduleId,
-            artId: $artId,
-            baseName: $baseName,
-            args: $args,
-        );
-
+    public static function emit(ImageRequest $request): void
+    {
         AppImageFactory::createDefault()
             ->createApplication($request)
             ->run();
