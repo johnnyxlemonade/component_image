@@ -52,8 +52,6 @@ final class ImageCacheResponder
         }
 
         $this->responseEmitter->sendNotModified();
-
-        return true;
     }
 
     public function sendCacheImageIfExists(ImageFileContext $file): bool

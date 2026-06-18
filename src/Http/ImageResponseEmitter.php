@@ -50,12 +50,45 @@ final class ImageResponseEmitter
         AppGenerator::WEBP => 'image/webp',
     ];
 
+    public function emit(ImageHttpResponse $response): never
+    {
+        if ($response->isNotModified()) {
+            HttpResponseHeaders::setNotModified();
+
+            exit;
+        }
+
+        if ($response->isBinary()) {
+            $this->emitBinaryResponse(
+                response: $response,
+            );
+        }
+
+        if ($response->isFile()) {
+            $this->emitFileResponse(
+                response: $response,
+            );
+        }
+
+        throw ImageRenderException::failed();
+    }
+
     public function sendResult(ImageResult $result): never
     {
-        $this->sendImage(
-            image: $result->getImage(),
+        $content = $result->getImage()->toString(
             type: $result->getType(),
             quality: $result->getQuality(),
+        );
+
+        if ($content === '') {
+            throw ImageRenderException::failed();
+        }
+
+        $this->emit(
+            response: ImageHttpResponse::binary(
+                content: $content,
+                type: $result->getType(),
+            ),
         );
     }
 
@@ -70,9 +103,11 @@ final class ImageResponseEmitter
             throw ImageRenderException::failed();
         }
 
-        $this->sendBinary(
-            content: $content,
-            type: $type,
+        $this->emit(
+            response: ImageHttpResponse::binary(
+                content: $content,
+                type: $type,
+            ),
         );
     }
 
@@ -81,55 +116,24 @@ final class ImageResponseEmitter
         ?int $type = null,
         ?int $lastModified = null,
     ): never {
-        $this->sendHeader(
-            type: $type,
-            size: strlen($content),
-            lastModified: $lastModified,
+        $this->emit(
+            response: ImageHttpResponse::binary(
+                content: $content,
+                type: $type,
+                lastModified: $lastModified,
+            ),
         );
-
-        echo $content;
-        exit;
     }
 
-    /**
-     * Emits a cached image file directly from disk in chunks.
-     */
     public function sendFile(string $file, ?int $type = null): never
     {
-        $size = (int) @filesize($file);
-
-        $this->sendHeader(
-            type: $type,
-            size: $size,
-            lastModified: $this->getFileMTime($file),
+        $this->emit(
+            response: ImageHttpResponse::file(
+                file: $file,
+                type: $type,
+                lastModified: $this->getFileMTime($file),
+            ),
         );
-
-        $handle = @fopen($file, 'rb');
-
-        if (!is_resource($handle)) {
-            throw ImageRenderException::failed();
-        }
-
-        while (!feof($handle)) {
-            $chunk = fread($handle, 8192);
-
-            if ($chunk === false) {
-                fclose($handle);
-
-                throw ImageRenderException::failed();
-            }
-
-            echo $chunk;
-
-            if (ob_get_level() > 0) {
-                ob_flush();
-            }
-
-            flush();
-        }
-
-        fclose($handle);
-        exit;
     }
 
     public function sendHeader(
@@ -161,9 +165,11 @@ final class ImageResponseEmitter
         );
     }
 
-    public function sendNotModified(): void
+    public function sendNotModified(): never
     {
-        HttpResponseHeaders::setNotModified();
+        $this->emit(
+            response: ImageHttpResponse::notModified(),
+        );
     }
 
     private function getFileMTime(string $file): ?int
@@ -183,5 +189,67 @@ final class ImageResponseEmitter
             key: 'REQUEST_TIME',
             default: (string) time(),
         );
+    }
+
+    private function emitBinaryResponse(ImageHttpResponse $response): never
+    {
+        $content = $response->getContent();
+
+        if ($content === null) {
+            throw ImageRenderException::failed();
+        }
+
+        $this->sendHeader(
+            type: $response->getType(),
+            size: strlen($content),
+            lastModified: $response->getLastModified(),
+        );
+
+        echo $content;
+        exit;
+    }
+
+    private function emitFileResponse(ImageHttpResponse $response): never
+    {
+        $file = $response->getFile();
+
+        if ($file === null) {
+            throw ImageRenderException::failed();
+        }
+
+        $size = (int) @filesize($file);
+
+        $this->sendHeader(
+            type: $response->getType(),
+            size: $size,
+            lastModified: $response->getLastModified(),
+        );
+
+        $handle = @fopen($file, 'rb');
+
+        if (!is_resource($handle)) {
+            throw ImageRenderException::failed();
+        }
+
+        while (!feof($handle)) {
+            $chunk = fread($handle, 8192);
+
+            if ($chunk === false) {
+                fclose($handle);
+
+                throw ImageRenderException::failed();
+            }
+
+            echo $chunk;
+
+            if (ob_get_level() > 0) {
+                ob_flush();
+            }
+
+            flush();
+        }
+
+        fclose($handle);
+        exit;
     }
 }
