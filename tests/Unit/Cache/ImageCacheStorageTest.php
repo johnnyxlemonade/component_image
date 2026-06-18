@@ -111,6 +111,38 @@ final class ImageCacheStorageTest extends TestCase
         self::assertDirectoryDoesNotExist($context->getDirectory()->getCache());
     }
 
+    public function testDeletesOnlyCurrentVariantCacheFiles(): void
+    {
+        $context = $this->createContext();
+        $storage = new ImageCacheStorage();
+
+        $storage->saveVariant(
+            context: $context,
+            result: $this->createPngResult(),
+        );
+
+        $otherCacheFile = $context->getDirectory()->getCache()
+            . DIRECTORY_SEPARATOR
+            . 'other-cache-file.png';
+
+        $this->createPngFile(
+            file: $otherCacheFile,
+            width: 50,
+            height: 50,
+        );
+
+        self::assertFileExists($context->getCacheFile());
+        self::assertFileExists($otherCacheFile);
+
+        $storage->deleteVariantCache(
+            context: $context,
+        );
+
+        self::assertFileDoesNotExist($context->getCacheFile());
+        self::assertFileExists($otherCacheFile);
+        self::assertDirectoryExists($context->getDirectory()->getCache());
+    }
+
     private function createContext(): ImageContext
     {
         return new ImageContext(
@@ -148,14 +180,37 @@ final class ImageCacheStorageTest extends TestCase
             image: AppGenerator::fromBlank(
                 width: 120,
                 height: 80,
-                color: [
-                    'red' => 255,
-                    'green' => 255,
-                    'blue' => 255,
-                ],
+                color: AppGenerator::rgb(
+                    red: 255,
+                    green: 255,
+                    blue: 255,
+                ),
             ),
             type: AppGenerator::PNG,
             quality: 85,
+        );
+    }
+
+    private function createPngFile(string $file, int $width, int $height): void
+    {
+        $directory = dirname($file);
+
+        if (!is_dir($directory) && !mkdir($directory, 0777, true) && !is_dir($directory)) {
+            self::fail(sprintf('Unable to create directory "%s".', $directory));
+        }
+
+        AppGenerator::fromBlank(
+            width: $width,
+            height: $height,
+            color: AppGenerator::rgb(
+                red: 255,
+                green: 255,
+                blue: 255,
+            ),
+        )->save(
+            file: $file,
+            quality: 9,
+            type: AppGenerator::PNG,
         );
     }
 
@@ -192,7 +247,7 @@ final class ImageCacheStorageTest extends TestCase
 
             $path = $directory . DIRECTORY_SEPARATOR . $item;
 
-            if (is_dir($path)) {
+            if (is_dir($path) && !is_link($path)) {
                 $this->removeDirectory(
                     directory: $path,
                 );
@@ -200,7 +255,7 @@ final class ImageCacheStorageTest extends TestCase
                 continue;
             }
 
-            if (is_file($path)) {
+            if (is_file($path) || is_link($path)) {
                 unlink($path);
             }
         }
