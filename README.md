@@ -132,16 +132,16 @@ w800-h600-q85
 
 ## Presets
 
-The component supports fixed size presets:
+Size presets are provided by `ImageSizePresetConfig`. The default configuration includes:
 
 | Preset | Size |
 | --- | --- |
-| `xss` | 32×32 |
-| `xs` | 48×48 |
-| `sm` | 96×96 |
-| `md` | 160×160 |
-| `lg` | 320×320 |
-| `xl` | 640×640 |
+| `xss` | 32 × 32 |
+| `xs` | 48 × 48 |
+| `sm` | 96 × 96 |
+| `md` | 160 × 160 |
+| `lg` | 320 × 320 |
+| `xl` | 640 × 640 |
 
 Presets can be scaled by appending a numeric suffix:
 
@@ -149,9 +149,9 @@ Presets can be scaled by appending a numeric suffix:
 md2
 ```
 
-This resolves to `320×320`.
+With the default configuration, `md2` resolves to `320 × 320` and `md3` resolves to `480 × 480`.
 
-The maximum preset scale is intentionally limited to prevent excessive generated image sizes.
+Preset scale suffixes are supported up to the configured maximum scale. The default maximum scale is intentionally limited to prevent excessive generated image sizes.
 
 ## Original mode
 
@@ -319,6 +319,59 @@ $options->getHash();        // deterministic options hash
 ```
 
 Runtime image processing should consume the DTO rather than depending on parser internals.
+
+### Custom parser configuration
+
+`ImageOptionsParser` uses a default parser configuration out of the box. Applications can provide their own immutable config objects to override size presets, preset scaling, default canvas color, quality limits and dimension limits.
+
+```php
+<?php
+
+use Lemonade\Image\Options\Config\ImageCanvasConfig;
+use Lemonade\Image\Options\Config\ImageDimensionConfig;
+use Lemonade\Image\Options\Config\ImageOptionsParserConfig;
+use Lemonade\Image\Options\Config\ImageQualityConfig;
+use Lemonade\Image\Options\Config\ImageSizePreset;
+use Lemonade\Image\Options\Config\ImageSizePresetCollection;
+use Lemonade\Image\Options\Config\ImageSizePresetConfig;
+use Lemonade\Image\Options\ImageOptionsParser;
+use Lemonade\Image\Options\ImageResizeMode;
+
+$config = new ImageOptionsParserConfig(
+    sizePresets: new ImageSizePresetConfig(
+        presets: new ImageSizePresetCollection([
+            ImageSizePreset::create(code: 'card', width: 600, height: 400),
+            ImageSizePreset::create(code: 'hero', width: 1600, height: 900),
+        ]),
+        maxScale: 4,
+    ),
+    canvas: new ImageCanvasConfig(
+        defaultColor: 'f5f5f5',
+    ),
+    quality: new ImageQualityConfig(
+        defaultQuality: 85,
+        minQuality: 10,
+        maxQuality: 95,
+    ),
+    dimensions: new ImageDimensionConfig(
+        minWidth: 50,
+        minHeight: 50,
+        maxWidth: 3840,
+        maxHeight: 2160,
+    ),
+);
+
+$options = (new ImageOptionsParser(
+    args: 'hero2-z3-q100',
+    config: $config,
+))->toDTO();
+
+$options->getWidth();       // 3200
+$options->getHeight();      // 1800
+$options->getResizeMode();  // ImageResizeMode::Fit
+$options->getQuality();     // 95
+$options->getCanvasColor(); // f5f5f5
+```
 
 ## Cache behavior
 
