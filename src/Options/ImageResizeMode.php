@@ -22,7 +22,7 @@ enum ImageResizeMode: int
     /**
      * @return list<int>
      */
-    public static function legacyCropValues(): array
+    public static function supportedUrlValues(): array
     {
         return [
             self::Shrink->value,
