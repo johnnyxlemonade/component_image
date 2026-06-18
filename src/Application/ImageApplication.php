@@ -41,16 +41,24 @@ final class ImageApplication
     {
         $file = $this->context->getFile();
 
-        if ($this->cacheResponder->sendBrowserCacheIfFresh(
+        $response = $this->cacheResponder->createNotModifiedResponseIfFresh(
             file: $file,
-        )) {
-            return;
+        );
+
+        if ($response !== null) {
+            $this->responseEmitter->emit(
+                response: $response,
+            );
         }
 
-        if ($this->cacheResponder->sendCacheImageIfExists(
+        $response = $this->cacheResponder->createCacheResponseIfExists(
             file: $file,
-        )) {
-            return;
+        );
+
+        if ($response !== null) {
+            $this->responseEmitter->emit(
+                response: $response,
+            );
         }
 
         if (!$this->fileInspector->exists(

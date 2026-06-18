@@ -57,7 +57,6 @@ final class AppImageFactory
                 request: $request,
             ),
             cacheResponder: new ImageCacheResponder(
-                responseEmitter: $responseEmitter,
                 fileInspector: $fileInspector,
             ),
             cacheStorage: new ImageCacheStorage(),

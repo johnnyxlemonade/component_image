@@ -8,7 +8,7 @@ use Lemonade\Image\Context\ImageFileContext;
 use Lemonade\Image\Detection\ImageFileInspector;
 use Lemonade\Image\Detection\WebpSupportDetector;
 use Lemonade\Image\Generator\AppGenerator;
-use Lemonade\Image\Http\ImageResponseEmitter;
+use Lemonade\Image\Http\ImageHttpResponse;
 use Lemonade\Image\Http\ServerRequest;
 
 use function filemtime;
@@ -17,14 +17,13 @@ use function strtotime;
 final class ImageCacheResponder
 {
     public function __construct(
-        private readonly ImageResponseEmitter $responseEmitter,
         private readonly ImageFileInspector $fileInspector,
     ) {}
 
-    public function sendBrowserCacheIfFresh(ImageFileContext $file): bool
+    public function createNotModifiedResponseIfFresh(ImageFileContext $file): ?ImageHttpResponse
     {
         if (!ServerRequest::has('HTTP_IF_MODIFIED_SINCE')) {
-            return false;
+            return null;
         }
 
         $clientTime = (int) strtotime(
@@ -32,7 +31,7 @@ final class ImageCacheResponder
         );
 
         if ($clientTime < 1) {
-            return false;
+            return null;
         }
 
         $cacheFile = $this->resolveFreshCacheFile(
@@ -40,7 +39,7 @@ final class ImageCacheResponder
         );
 
         if ($cacheFile === null) {
-            return false;
+            return null;
         }
 
         $cacheTime = $this->getFileMTime(
@@ -48,20 +47,20 @@ final class ImageCacheResponder
         );
 
         if ($cacheTime === null || $clientTime < $cacheTime) {
-            return false;
+            return null;
         }
 
-        $this->responseEmitter->sendNotModified();
+        return ImageHttpResponse::notModified();
     }
 
-    public function sendCacheImageIfExists(ImageFileContext $file): bool
+    public function createCacheResponseIfExists(ImageFileContext $file): ?ImageHttpResponse
     {
         $cacheFile = $this->resolveFreshCacheFile(
             file: $file,
         );
 
         if ($cacheFile === null) {
-            return false;
+            return null;
         }
 
         $type = $this->resolveOutputType(
@@ -69,12 +68,15 @@ final class ImageCacheResponder
         );
 
         if ($type === null) {
-            return false;
+            return null;
         }
 
-        $this->responseEmitter->sendFile(
+        return ImageHttpResponse::file(
             file: $cacheFile,
             type: $type,
+            lastModified: $this->getFileMTime(
+                file: $cacheFile,
+            ),
         );
     }
 
