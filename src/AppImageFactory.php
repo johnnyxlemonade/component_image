@@ -89,14 +89,14 @@ final class AppImageFactory
                 request: $request,
             ),
             filesystem: $this->filesystem,
-            file: $request->baseName,
+            file: $request->getBaseName(),
         );
     }
 
     private function createOptions(ImageRequest $request): ImageOptionsDTO
     {
         return (new ImageOptionsParser(
-            args: $request->args,
+            args: $request->getArgs(),
         ))->toDTO();
     }
 
@@ -104,10 +104,10 @@ final class AppImageFactory
     {
         return new ImageDirectoryResolver(
             config: $this->storageConfig,
-            level: $request->level,
-            storageTypeId: $request->storageTypeId,
-            moduleId: $request->moduleId,
-            artId: $request->artId,
+            level: $request->getLevel(),
+            storageTypeId: $request->getStorageTypeId(),
+            moduleId: $request->getModuleId(),
+            artId: $request->getArtId(),
         );
     }
 

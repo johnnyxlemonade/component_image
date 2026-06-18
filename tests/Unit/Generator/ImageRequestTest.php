@@ -20,12 +20,31 @@ final class ImageRequestTest extends TestCase
             args: 'w320-h240-z1-cffffff-q85',
         );
 
-        self::assertSame(6, $request->level);
-        self::assertSame('thumbnail', $request->storageTypeId);
-        self::assertSame(10, $request->moduleId);
-        self::assertSame(12345, $request->artId);
-        self::assertSame('example.png', $request->baseName);
-        self::assertSame('w320-h240-z1-cffffff-q85', $request->args);
+        self::assertSame(6, $request->getLevel());
+        self::assertSame('thumbnail', $request->getStorageTypeId());
+        self::assertSame(10, $request->getModuleId());
+        self::assertSame(12345, $request->getArtId());
+        self::assertSame('example.png', $request->getBaseName());
+        self::assertSame('w320-h240-z1-cffffff-q85', $request->getArgs());
+    }
+
+    public function testCreatesRequestUsingNamedFactory(): void
+    {
+        $request = ImageRequest::create(
+            level: 6,
+            storageTypeId: 'gallery',
+            moduleId: 12,
+            artId: 345,
+            baseName: 'example.jpg',
+            args: 'w800-h600-z3-q85',
+        );
+
+        self::assertSame(6, $request->getLevel());
+        self::assertSame('gallery', $request->getStorageTypeId());
+        self::assertSame(12, $request->getModuleId());
+        self::assertSame(345, $request->getArtId());
+        self::assertSame('example.jpg', $request->getBaseName());
+        self::assertSame('w800-h600-z3-q85', $request->getArgs());
     }
 
     public function testAllowsNullableRoutingValues(): void
@@ -39,12 +58,12 @@ final class ImageRequestTest extends TestCase
             args: null,
         );
 
-        self::assertSame(3, $request->level);
-        self::assertNull($request->storageTypeId);
-        self::assertNull($request->moduleId);
-        self::assertNull($request->artId);
-        self::assertNull($request->baseName);
-        self::assertNull($request->args);
+        self::assertSame(3, $request->getLevel());
+        self::assertNull($request->getStorageTypeId());
+        self::assertNull($request->getModuleId());
+        self::assertNull($request->getArtId());
+        self::assertNull($request->getBaseName());
+        self::assertNull($request->getArgs());
     }
 
     public function testAllowsStringIdentifiers(): void
@@ -58,8 +77,8 @@ final class ImageRequestTest extends TestCase
             args: 'md2',
         );
 
-        self::assertSame('gallery', $request->storageTypeId);
-        self::assertSame('20', $request->moduleId);
-        self::assertSame('54321', $request->artId);
+        self::assertSame('gallery', $request->getStorageTypeId());
+        self::assertSame('20', $request->getModuleId());
+        self::assertSame('54321', $request->getArtId());
     }
 }

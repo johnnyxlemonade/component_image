@@ -20,12 +20,60 @@ namespace Lemonade\Image\Generator;
  */
 final class ImageRequest
 {
+    public static function create(
+        int $level,
+        string|int|null $storageTypeId,
+        string|int|null $moduleId,
+        string|int|null $artId,
+        ?string $baseName,
+        ?string $args,
+    ): self {
+        return new self(
+            level: $level,
+            storageTypeId: $storageTypeId,
+            moduleId: $moduleId,
+            artId: $artId,
+            baseName: $baseName,
+            args: $args,
+        );
+    }
+
     public function __construct(
-        public readonly int $level,
-        public readonly string|int|null $storageTypeId,
-        public readonly string|int|null $moduleId,
-        public readonly string|int|null $artId,
-        public readonly ?string $baseName,
-        public readonly ?string $args,
+        private readonly int $level,
+        private readonly string|int|null $storageTypeId,
+        private readonly string|int|null $moduleId,
+        private readonly string|int|null $artId,
+        private readonly ?string $baseName,
+        private readonly ?string $args,
     ) {}
+
+    public function getLevel(): int
+    {
+        return $this->level;
+    }
+
+    public function getStorageTypeId(): string|int|null
+    {
+        return $this->storageTypeId;
+    }
+
+    public function getModuleId(): string|int|null
+    {
+        return $this->moduleId;
+    }
+
+    public function getArtId(): string|int|null
+    {
+        return $this->artId;
+    }
+
+    public function getBaseName(): ?string
+    {
+        return $this->baseName;
+    }
+
+    public function getArgs(): ?string
+    {
+        return $this->args;
+    }
 }
