@@ -20,6 +20,10 @@ use Lemonade\Image\Options\ImageResizeMode;
 use Lemonade\Image\Utils\FileSystem;
 use PHPUnit\Framework\TestCase;
 
+use function time;
+use function touch;
+use function gmdate;
+
 final class ImageApplicationTest extends TestCase
 {
     private string $root;
@@ -76,6 +80,60 @@ final class ImageApplicationTest extends TestCase
         self::assertNotSame('', $response->getContent());
     }
 
+    public function testReturnsCacheFileResponseWhenFreshCacheExists(): void
+    {
+        $sourceFile = $this->getSourceFile(
+            file: 'example.png',
+        );
+
+        $this->createPngFile(
+            file: $sourceFile,
+            width: 800,
+            height: 600,
+        );
+
+        $fileContext = $this->createFileContext(
+            file: 'example.png',
+            width: 400,
+            height: 300,
+            resizeMode: ImageResizeMode::Fit,
+        );
+
+        $cacheFile = $fileContext->getCacheFile();
+
+        $this->createPngFile(
+            file: $cacheFile,
+            width: 400,
+            height: 300,
+        );
+
+        touch(
+            filename: $sourceFile,
+            mtime: time() - 10,
+        );
+
+        touch(
+            filename: $cacheFile,
+            mtime: time(),
+        );
+
+        $application = $this->createApplication(
+            file: 'example.png',
+            width: 400,
+            height: 300,
+            resizeMode: ImageResizeMode::Fit,
+        );
+
+        $response = $application->handle();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertFalse($response->isBinary());
+        self::assertTrue($response->isFile());
+        self::assertFalse($response->isNotModified());
+        self::assertSame($cacheFile, $response->getFile());
+        self::assertSame(AppGenerator::PNG, $response->getType());
+    }
+
     public function testCreatesFallbackResponseWhenSourceImageIsMissing(): void
     {
         $placeholder = $this->root . DIRECTORY_SEPARATOR . 'placeholder.png';
@@ -105,6 +163,69 @@ final class ImageApplicationTest extends TestCase
         self::assertNotSame('', $response->getContent());
     }
 
+    public function testReturnsNotModifiedResponseWhenBrowserCacheIsFresh(): void
+    {
+        $sourceFile = $this->getSourceFile(
+            file: 'example.png',
+        );
+
+        $this->createPngFile(
+            file: $sourceFile,
+            width: 800,
+            height: 600,
+        );
+
+        $fileContext = $this->createFileContext(
+            file: 'example.png',
+            width: 400,
+            height: 300,
+            resizeMode: ImageResizeMode::Fit,
+        );
+
+        $cacheFile = $fileContext->getCacheFile();
+
+        $this->createPngFile(
+            file: $cacheFile,
+            width: 400,
+            height: 300,
+        );
+
+        $sourceTime = time() - 20;
+        $cacheTime = time() - 10;
+
+        touch(
+            filename: $sourceFile,
+            mtime: $sourceTime,
+        );
+
+        touch(
+            filename: $cacheFile,
+            mtime: $cacheTime,
+        );
+
+        $_SERVER['HTTP_IF_MODIFIED_SINCE'] = gmdate(
+                format: 'D, d M Y H:i:s',
+                timestamp: $cacheTime,
+            ) . ' GMT';
+
+        $application = $this->createApplication(
+            file: 'example.png',
+            width: 400,
+            height: 300,
+            resizeMode: ImageResizeMode::Fit,
+        );
+
+        $response = $application->handle();
+
+        self::assertSame(304, $response->getStatusCode());
+        self::assertFalse($response->isBinary());
+        self::assertFalse($response->isFile());
+        self::assertTrue($response->isNotModified());
+        self::assertNull($response->getContent());
+        self::assertNull($response->getFile());
+        self::assertNull($response->getType());
+    }
+
     private function createApplication(
         string $file,
         ?int $width,
@@ -112,37 +233,20 @@ final class ImageApplicationTest extends TestCase
         ImageResizeMode $resizeMode,
         ?string $placeholderImageFile = null,
     ): ImageApplication {
-        $storageConfig = new ImageStorageConfig(
-            storageRoot: $this->root,
-            storageDirectory: 'storage',
-            cacheDirectory: 'cache',
-            fallbackModuleId: '0',
-            fallbackStorageTypeId: '0',
-            placeholderImageFile: $placeholderImageFile ?? $this->root . DIRECTORY_SEPARATOR . 'placeholder.png',
+        $storageConfig = $this->createStorageConfig(
+            placeholderImageFile: $placeholderImageFile,
         );
 
         $fileInspector = new ImageFileInspector();
 
         return new ImageApplication(
             context: new ImageContext(
-                file: new ImageFileContext(
-                    directory: new ImageDirectoryResolver(
-                        config: $storageConfig,
-                        level: 6,
-                        storageTypeId: 'thumbnail',
-                        moduleId: 10,
-                        artId: 12345,
-                    ),
-                    options: new ImageOptionsDTO(
-                        width: $width,
-                        height: $height,
-                        resizeMode: $resizeMode,
-                        canvasColor: 'ffffff',
-                        quality: 85,
-                        missing: true,
-                    ),
-                    filesystem: new FileSystem(),
+                file: $this->createFileContext(
                     file: $file,
+                    width: $width,
+                    height: $height,
+                    resizeMode: $resizeMode,
+                    placeholderImageFile: $placeholderImageFile,
                 ),
             ),
             cacheResponder: new ImageCacheResponder(
@@ -155,6 +259,48 @@ final class ImageApplicationTest extends TestCase
                 storageConfig: $storageConfig,
             ),
             fileInspector: $fileInspector,
+        );
+    }
+
+    private function createFileContext(
+        string $file,
+        ?int $width,
+        ?int $height,
+        ImageResizeMode $resizeMode,
+        ?string $placeholderImageFile = null,
+    ): ImageFileContext {
+        return new ImageFileContext(
+            directory: new ImageDirectoryResolver(
+                config: $this->createStorageConfig(
+                    placeholderImageFile: $placeholderImageFile,
+                ),
+                level: 6,
+                storageTypeId: 'thumbnail',
+                moduleId: 10,
+                artId: 12345,
+            ),
+            options: new ImageOptionsDTO(
+                width: $width,
+                height: $height,
+                resizeMode: $resizeMode,
+                canvasColor: 'ffffff',
+                quality: 85,
+                missing: true,
+            ),
+            filesystem: new FileSystem(),
+            file: $file,
+        );
+    }
+
+    private function createStorageConfig(?string $placeholderImageFile = null): ImageStorageConfig
+    {
+        return new ImageStorageConfig(
+            storageRoot: $this->root,
+            storageDirectory: 'storage',
+            cacheDirectory: 'cache',
+            fallbackModuleId: '0',
+            fallbackStorageTypeId: '0',
+            placeholderImageFile: $placeholderImageFile ?? $this->root . DIRECTORY_SEPARATOR . 'placeholder.png',
         );
     }
 
