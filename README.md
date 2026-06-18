@@ -54,42 +54,46 @@ composer require lemonade/component_image:dev-master
 - Resize, crop, fit and canvas-based transformations
 - Generated image cache
 - WebP support detection
+- Browser cache validation through `If-Modified-Since`
+- Filesystem cache validation against source image modification time
 - HTTP cache headers
 - Filesystem abstraction for cache writes
 - Typed component exceptions
+- Immutable request and response DTOs
 - PHPUnit test suite
 - PHPStan level 10 configuration
 - Memory-efficient streaming from cache in 8kB chunks with output buffer flushing
 
 ## Basic usage
 
-The legacy-compatible entrypoint is `Lemonade\Image\AppImage::factoryApp()`.
+The public entrypoint is `Lemonade\Image\AppImage::emit()` with an immutable `ImageRequest`.
 
 ```php
 <?php
 
 use Lemonade\Image\AppImage;
+use Lemonade\Image\Generator\ImageRequest;
 
-AppImage::factoryApp(
-    level: 6,
-    storageTypId: 'gallery',
-    moduleId: 12,
-    artId: 345,
-    baseName: 'example.jpg',
-    args: 'w800-h600-z3-cffffff-q85-e1',
+AppImage::emit(
+    request: ImageRequest::create(
+        level: 6,
+        storageTypeId: 'gallery',
+        moduleId: 12,
+        artId: 345,
+        baseName: 'example.jpg',
+        args: 'w800-h600-z3-cffffff-q85-e1',
+    ),
 );
 ```
 
 The component resolves the source file, checks browser and filesystem cache, generates a resized variant when needed, stores the generated image in cache and emits the HTTP image response.
-
-The `storageTypId` parameter intentionally keeps the historical name for backward compatibility with named arguments.
 
 ## Request parameters
 
 | Parameter | Type | Description |
 | --- | --- | --- |
 | `level` | `int` | Directory split depth used when building the object storage path from `artId`. |
-| `storageTypId` | `string|int|null` | Storage type identifier or alias. Known aliases are `template`, `thumbnail`, `gallery` and `editor`. |
+| `storageTypeId` | `string|int|null` | Storage type identifier or alias. Known aliases are `template`, `thumbnail`, `gallery` and `editor`. |
 | `moduleId` | `string|int|null` | Module or storage namespace. Defaults to `0` when omitted. |
 | `artId` | `string|int|null` | Object identifier used to build the nested storage directory. Defaults to `0` when omitted. |
 | `baseName` | `string|null` | Source image filename. Defaults to `missing.png` when omitted. |
@@ -109,7 +113,7 @@ Supported tokens:
 | --- | --- | --- |
 | `w` | `w800` | Target width in pixels. |
 | `h` | `h600` | Target height in pixels. |
-| `q` | `q85` | Output quality. Invalid values are ignored. When quality clamping is enabled in the parser implementation, values are normalized to the supported range. |
+| `q` | `q85` | Output quality. Invalid values are ignored. Values are normalized to the supported range by the parser. |
 | `c` | `cffffff` | Canvas color as a 6-character hexadecimal value without `#`. |
 | `e` | `e1` | Enables or disables missing-image fallback handling. Supported values are `0` and `1`. |
 | `z` | `z3` | Resize mode. See the resize mode table below. |
@@ -163,16 +167,18 @@ Original mode resets width and height and bypasses the normal fallback dimension
 
 Resize mode is controlled by the `z` token.
 
-| Mode | Meaning |
-| --- | --- |
-| `z0` | Shrink only. |
-| `z1` | Fit into a canvas using the normal canvas scale. |
-| `z2` | Exact resize. |
-| `z3` | Fit into the requested box. |
-| `z4` | Fit into a canvas using a larger canvas scale. |
-| `z5` | Fit into a canvas using the maximum canvas scale. |
+| Mode | Enum | Meaning |
+| --- | --- | --- |
+| `z0` | `ImageResizeMode::Shrink` | Shrink only. |
+| `z1` | `ImageResizeMode::FitWithCanvas` | Fit into a canvas using the normal canvas scale. |
+| `z2` | `ImageResizeMode::Exact` | Exact resize. |
+| `z3` | `ImageResizeMode::Fit` | Fit into the requested box. |
+| `z4` | `ImageResizeMode::FitWithBiggerCanvas` | Fit into a canvas using a larger canvas scale. |
+| `z5` | `ImageResizeMode::FitWithMaxCanvas` | Fit into a canvas using the maximum canvas scale. |
 
-The internal implementation may represent these modes through an enum, but the public option string remains backward-compatible with the numeric `z` values.
+The internal implementation represents these modes through `ImageResizeMode`, while the public option string remains backward-compatible with the numeric `z` values.
+
+The `original` token is represented internally as `ImageResizeMode::Original`. It is intentionally not exposed through the numeric `z` token.
 
 ## Storage layout
 
@@ -258,10 +264,11 @@ $config = new ImageStorageConfig(
 
 use Lemonade\Image\AppImageFactory;
 use Lemonade\Image\Generator\ImageRequest;
+use Lemonade\Image\Http\ImageResponseEmitter;
 use Lemonade\Image\ImageStorageConfig;
 use Lemonade\Image\Utils\FileSystem;
 
-$request = new ImageRequest(
+$request = ImageRequest::create(
     level: 6,
     storageTypeId: 'gallery',
     moduleId: 12,
@@ -277,10 +284,16 @@ $factory = new AppImageFactory(
     ),
 );
 
-$factory
+$response = $factory
     ->createApplication($request)
-    ->run();
+    ->handle();
+
+(new ImageResponseEmitter())->emit(
+    response: $response,
+);
 ```
+
+This split allows advanced integrations to inspect or test the prepared `ImageHttpResponse` before emitting it.
 
 ## Parsed options API
 
@@ -290,6 +303,7 @@ $factory
 <?php
 
 use Lemonade\Image\Options\ImageOptionsParser;
+use Lemonade\Image\Options\ImageResizeMode;
 
 $options = (new ImageOptionsParser(
     args: 'w800-h600-z3-q85',
@@ -297,7 +311,7 @@ $options = (new ImageOptionsParser(
 
 $options->getWidth();       // 800
 $options->getHeight();      // 600
-$options->getCrop();        // 3
+$options->getResizeMode();  // ImageResizeMode::Fit
 $options->getQuality();     // 85
 $options->getCanvasColor(); // ffffff
 $options->isMissing();      // true
@@ -317,7 +331,33 @@ The image workflow checks cache in this order:
 
 Generated variants are saved into the cache directory. WebP variants are generated when WebP is supported by the installed GD extension.
 
-When stale-cache validation is enabled, a cached variant should only be reused when it is at least as fresh as the source image. If the source image is newer than the cache variant, the image is regenerated.
+A cached variant is reused only when it is at least as fresh as the source image. If the source image is newer than the cache variant, the image is regenerated.
+
+When the source image is missing, only the current generated variant cache is deleted. Other cached files in the same cache directory are preserved.
+
+## Response handling
+
+The runtime workflow produces an immutable `ImageHttpResponse`.
+
+The default facade emits the response immediately:
+
+```php
+AppImage::emit(
+    request: $request,
+);
+```
+
+Custom integrations can handle the response manually:
+
+```php
+$response = $factory
+    ->createApplication($request)
+    ->handle();
+
+$response->isBinary();
+$response->isFile();
+$response->isNotModified();
+```
 
 ## Fallback behavior
 
@@ -329,7 +369,7 @@ Fallback images are cached separately by option hash.
 
 ## HTTP responses
 
-The component emits image responses directly.
+The component emits image responses through `ImageResponseEmitter`.
 
 Cached image files are streamed directly from disk in 8kB chunks with active output buffer flushing, ensuring a near-zero memory footprint even under heavy load. Generated images are rendered to binary output and emitted with cache headers, content type, and content length metadata.
 
