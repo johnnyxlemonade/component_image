@@ -14,7 +14,6 @@ use Lemonade\Image\Filesystem\ImageDirectoryResolver;
 use Lemonade\Image\Generator\ImageGenerator;
 use Lemonade\Image\Generator\ImageRequest;
 use Lemonade\Image\Http\ImageHttpResponseFactory;
-use Lemonade\Image\Http\ImageResponseEmitter;
 use Lemonade\Image\Options\ImageOptionsDTO;
 use Lemonade\Image\Options\ImageOptionsParser;
 use Lemonade\Image\Utils\FileSystem;
@@ -50,7 +49,6 @@ final class AppImageFactory
 
     public function createApplication(ImageRequest $request): ImageApplication
     {
-        $responseEmitter = new ImageResponseEmitter();
         $fileInspector = new ImageFileInspector();
 
         return new ImageApplication(
@@ -61,7 +59,6 @@ final class AppImageFactory
                 fileInspector: $fileInspector,
             ),
             cacheStorage: new ImageCacheStorage(),
-            responseEmitter: $responseEmitter,
             responseFactory: new ImageHttpResponseFactory(),
             generator: new ImageGenerator(
                 fileInspector: $fileInspector,

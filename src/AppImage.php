@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lemonade\Image;
 
 use Lemonade\Image\Generator\ImageRequest;
+use Lemonade\Image\Http\ImageResponseEmitter;
 
 /**
  * Provides the image component entrypoint.
@@ -24,10 +25,14 @@ final class AppImage
     /**
      * Emits an image response for a prepared image request.
      */
-    public static function emit(ImageRequest $request): void
+    public static function emit(ImageRequest $request): never
     {
-        AppImageFactory::createDefault()
+        $response = AppImageFactory::createDefault()
             ->createApplication($request)
-            ->run();
+            ->handle();
+
+        (new ImageResponseEmitter())->emit(
+            response: $response,
+        );
     }
 }

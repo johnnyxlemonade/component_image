@@ -9,8 +9,8 @@ use Lemonade\Image\Cache\ImageCacheStorage;
 use Lemonade\Image\Context\ImageContext;
 use Lemonade\Image\Detection\ImageFileInspector;
 use Lemonade\Image\Generator\ImageGenerator;
+use Lemonade\Image\Http\ImageHttpResponse;
 use Lemonade\Image\Http\ImageHttpResponseFactory;
-use Lemonade\Image\Http\ImageResponseEmitter;
 use Throwable;
 
 /**
@@ -33,13 +33,12 @@ final class ImageApplication
         private readonly ImageContext $context,
         private readonly ImageCacheResponder $cacheResponder,
         private readonly ImageCacheStorage $cacheStorage,
-        private readonly ImageResponseEmitter $responseEmitter,
         private readonly ImageHttpResponseFactory $responseFactory,
         private readonly ImageGenerator $generator,
         private readonly ImageFileInspector $fileInspector,
     ) {}
 
-    public function run(): never
+    public function handle(): ImageHttpResponse
     {
         $file = $this->context->getFile();
 
@@ -48,9 +47,7 @@ final class ImageApplication
         );
 
         if ($response !== null) {
-            $this->responseEmitter->emit(
-                response: $response,
-            );
+            return $response;
         }
 
         $response = $this->cacheResponder->createCacheResponseIfExists(
@@ -58,9 +55,7 @@ final class ImageApplication
         );
 
         if ($response !== null) {
-            $this->responseEmitter->emit(
-                response: $response,
-            );
+            return $response;
         }
 
         if (!$this->fileInspector->exists(
@@ -70,7 +65,7 @@ final class ImageApplication
                 context: $this->context,
             );
 
-            $this->createAndSendFallback();
+            return $this->createFallbackResponse();
         }
 
         try {
@@ -78,7 +73,7 @@ final class ImageApplication
                 file: $file,
             );
         } catch (Throwable) {
-            $this->createAndSendFallback();
+            return $this->createFallbackResponse();
         }
 
         $this->cacheStorage->saveVariant(
@@ -86,14 +81,12 @@ final class ImageApplication
             result: $result,
         );
 
-        $this->responseEmitter->emit(
-            response: $this->responseFactory->fromResult(
-                result: $result,
-            ),
+        return $this->responseFactory->fromResult(
+            result: $result,
         );
     }
 
-    private function createAndSendFallback(): never
+    private function createFallbackResponse(): ImageHttpResponse
     {
         $file = $this->context->getFile();
 
@@ -111,10 +104,8 @@ final class ImageApplication
             result: $result,
         );
 
-        $this->responseEmitter->emit(
-            response: $this->responseFactory->fromResult(
-                result: $result,
-            ),
+        return $this->responseFactory->fromResult(
+            result: $result,
         );
     }
 
