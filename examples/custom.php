@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Lemonade\Image\AppImageFactory;
 use Lemonade\Image\Generator\ImageRequest;
+use Lemonade\Image\Http\ImageResponseEmitter;
 use Lemonade\Image\ImageStorageConfig;
 use Lemonade\Image\Utils\FileSystem;
 
@@ -27,7 +28,7 @@ $factory = new AppImageFactory(
     ),
 );
 
-$request = new ImageRequest(
+$request = ImageRequest::create(
     level: 6,
     storageTypeId: 'gallery',
     moduleId: 20,
@@ -36,11 +37,15 @@ $request = new ImageRequest(
     args: 'w480-h320-z2-cf7f7f7-q90',
 );
 
-$factory
+$response = $factory
     ->createApplication(
         request: $request,
     )
-    ->run();
+    ->handle();
+
+(new ImageResponseEmitter())->emit(
+    response: $response,
+);
 
 /**
  * Creates a small demo source image for the example.

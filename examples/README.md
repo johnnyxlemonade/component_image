@@ -89,11 +89,13 @@ new ImageStorageConfig(
 
 The example intentionally does not create the requested source image, so the component renders a generated fallback image using the configured placeholder.
 
-## Legacy facade
+## Response handling
 
-The component still provides the backward-compatible `AppImage::factoryApp()` entrypoint.
+The examples use `AppImageFactory` directly so all generated files stay inside `build/examples/`.
 
-It uses the default storage configuration, so it is not used by these runnable examples. The examples use `AppImageFactory` instead to keep all generated files inside `build/examples/`.
+Each example creates an `ImageRequest`, resolves an `ImageHttpResponse` through `ImageApplication::handle()` and emits it through `ImageResponseEmitter`.
+
+The default facade `AppImage::emit()` can be used in application code when the default storage configuration is sufficient.
 
 ## Image option format
 
@@ -121,6 +123,6 @@ w = width
 h = height
 q = quality
 c = canvas color
-z = resize/crop mode
+z = resize mode
 e = missing image flag
 ```

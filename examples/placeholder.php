@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Lemonade\Image\AppImageFactory;
 use Lemonade\Image\Generator\ImageRequest;
+use Lemonade\Image\Http\ImageResponseEmitter;
 use Lemonade\Image\ImageStorageConfig;
 use Lemonade\Image\Utils\FileSystem;
 
@@ -27,7 +28,7 @@ $factory = new AppImageFactory(
     ),
 );
 
-$request = new ImageRequest(
+$request = ImageRequest::create(
     level: 6,
     storageTypeId: 'thumbnail',
     moduleId: 30,
@@ -36,11 +37,15 @@ $request = new ImageRequest(
     args: 'w600-h400-cffffff-q85',
 );
 
-$factory
+$response = $factory
     ->createApplication(
         request: $request,
     )
-    ->run();
+    ->handle();
+
+(new ImageResponseEmitter())->emit(
+    response: $response,
+);
 
 /**
  * Creates a placeholder image used when the requested source image is missing.
