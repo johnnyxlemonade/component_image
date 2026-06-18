@@ -263,6 +263,7 @@ $config = new ImageStorageConfig(
 <?php
 
 use Lemonade\Image\AppImageFactory;
+use Lemonade\Image\Fallback\ImageFallbackConfig;
 use Lemonade\Image\Generator\ImageRequest;
 use Lemonade\Image\Http\ImageResponseEmitter;
 use Lemonade\Image\ImageStorageConfig;
@@ -281,6 +282,10 @@ $factory = new AppImageFactory(
     filesystem: new FileSystem(),
     storageConfig: new ImageStorageConfig(
         storageRoot: '/var/www/project',
+    ),
+    fallbackConfig: new ImageFallbackConfig(
+        defaultWidth: 600,
+        defaultHeight: 600,
     ),
 );
 
@@ -417,6 +422,19 @@ $response->isNotModified();
 If the source image does not exist or generation fails, the component generates a fallback image.
 
 If the configured placeholder image exists, it is used as the fallback source. Otherwise, the component creates an internal transparent placeholder image and renders it into the requested fallback canvas.
+
+Fallback image dimensions are configurable through `ImageFallbackConfig`. These dimensions are used only as a final safety net when the request options do not provide usable width or height values.
+
+```php
+<?php
+
+use Lemonade\Image\Fallback\ImageFallbackConfig;
+
+$fallbackConfig = new ImageFallbackConfig(
+    defaultWidth: 600,
+    defaultHeight: 600,
+);
+```
 
 Fallback images are cached separately by option hash.
 
