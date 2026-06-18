@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Lemonade\Image\Tests\Unit\Options;
 
+use Lemonade\Image\Options\ImageOptionsDTO;
 use Lemonade\Image\Options\ImageOptionsParser;
+use Lemonade\Image\Options\ImageResizeMode;
 use PHPUnit\Framework\TestCase;
 
 final class ImageOptionsParserTest extends TestCase
@@ -17,7 +19,7 @@ final class ImageOptionsParserTest extends TestCase
 
         self::assertSame(320, $options->getWidth());
         self::assertSame(240, $options->getHeight());
-        self::assertSame(1, $options->getCrop());
+        self::assertSame(ImageResizeMode::FitWithCanvas, $options->getResizeMode());
         self::assertSame('ffffff', $options->getCanvasColor());
         self::assertSame(85, $options->getQuality());
         self::assertTrue($options->isMissing());
@@ -61,7 +63,7 @@ final class ImageOptionsParserTest extends TestCase
 
         self::assertNull($options->getWidth());
         self::assertNull($options->getHeight());
-        self::assertSame(-1, $options->getCrop());
+        self::assertSame(ImageResizeMode::Original, $options->getResizeMode());
     }
 
     public function testAppliesMinimumDimensions(): void
@@ -103,7 +105,7 @@ final class ImageOptionsParserTest extends TestCase
         self::assertSame(50, $options->getHeight());
         self::assertSame(72, $options->getQuality());
         self::assertSame('ffffff', $options->getCanvasColor());
-        self::assertSame(0, $options->getCrop());
+        self::assertSame(ImageResizeMode::Shrink, $options->getResizeMode());
         self::assertTrue($options->isMissing());
     }
 
@@ -117,7 +119,7 @@ final class ImageOptionsParserTest extends TestCase
         self::assertSame(600, $options->getHeight());
         self::assertSame(80, $options->getQuality());
         self::assertSame('000000', $options->getCanvasColor());
-        self::assertSame(3, $options->getCrop());
+        self::assertSame(ImageResizeMode::Fit, $options->getResizeMode());
         self::assertFalse($options->isMissing());
     }
 
@@ -133,5 +135,23 @@ final class ImageOptionsParserTest extends TestCase
 
         self::assertSame(1, $low->getQuality());
         self::assertSame(100, $high->getQuality());
+    }
+
+    public function testCreatesCopyWithResizeMode(): void
+    {
+        $options = new ImageOptionsDTO(
+            width: 320,
+            height: 240,
+            crop: ImageResizeMode::Shrink->value,
+            canvasColor: 'ffffff',
+            quality: 72,
+            missing: true,
+        );
+
+        $changed = $options->withResizeMode(ImageResizeMode::Fit);
+
+        self::assertNotSame($options, $changed);
+        self::assertSame(ImageResizeMode::Shrink, $options->getResizeMode());
+        self::assertSame(ImageResizeMode::Fit, $changed->getResizeMode());
     }
 }

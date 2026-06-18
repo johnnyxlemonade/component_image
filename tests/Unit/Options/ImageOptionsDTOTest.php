@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lemonade\Image\Tests\Unit\Options;
 
 use Lemonade\Image\Options\ImageOptionsDTO;
+use Lemonade\Image\Options\ImageResizeMode;
 use PHPUnit\Framework\TestCase;
 
 final class ImageOptionsDTOTest extends TestCase
@@ -15,7 +16,7 @@ final class ImageOptionsDTOTest extends TestCase
 
         self::assertSame(320, $options->getWidth());
         self::assertSame(240, $options->getHeight());
-        self::assertSame(1, $options->getCrop());
+        self::assertSame(ImageResizeMode::FitWithCanvas, $options->getResizeMode());
         self::assertSame('ffffff', $options->getCanvasColor());
         self::assertSame(85, $options->getQuality());
         self::assertTrue($options->isMissing());
@@ -27,7 +28,7 @@ final class ImageOptionsDTOTest extends TestCase
             (new ImageOptionsDTO(
                 width: null,
                 height: null,
-                crop: 0,
+                crop: ImageResizeMode::Shrink->value,
                 canvasColor: 'ffffff',
                 quality: 85,
                 missing: true,
@@ -38,7 +39,7 @@ final class ImageOptionsDTOTest extends TestCase
             (new ImageOptionsDTO(
                 width: 320,
                 height: null,
-                crop: 0,
+                crop: ImageResizeMode::Shrink->value,
                 canvasColor: 'ffffff',
                 quality: 85,
                 missing: true,
@@ -49,7 +50,7 @@ final class ImageOptionsDTOTest extends TestCase
             (new ImageOptionsDTO(
                 width: null,
                 height: 240,
-                crop: 0,
+                crop: ImageResizeMode::Shrink->value,
                 canvasColor: 'ffffff',
                 quality: 85,
                 missing: true,
@@ -83,16 +84,16 @@ final class ImageOptionsDTOTest extends TestCase
         self::assertSame(320, $modified->getWidth());
     }
 
-    public function testWithCropReturnsModifiedCopy(): void
+    public function testWithResizeModeReturnsModifiedCopy(): void
     {
         $original = $this->createOptions();
-        $modified = $original->withCrop(
-            crop: 2,
+        $modified = $original->withResizeMode(
+            resizeMode: ImageResizeMode::Exact,
         );
 
         self::assertNotSame($original, $modified);
-        self::assertSame(1, $original->getCrop());
-        self::assertSame(2, $modified->getCrop());
+        self::assertSame(ImageResizeMode::FitWithCanvas, $original->getResizeMode());
+        self::assertSame(ImageResizeMode::Exact, $modified->getResizeMode());
     }
 
     public function testWithCanvasColorReturnsModifiedCopy(): void
@@ -155,7 +156,7 @@ final class ImageOptionsDTOTest extends TestCase
         return new ImageOptionsDTO(
             width: 320,
             height: 240,
-            crop: 1,
+            crop: ImageResizeMode::FitWithCanvas->value,
             canvasColor: 'ffffff',
             quality: 85,
             missing: true,

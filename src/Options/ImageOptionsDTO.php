@@ -70,12 +70,12 @@ final class ImageOptionsDTO
         );
     }
 
-    public function withCrop(int $crop): self
+    public function withResizeMode(ImageResizeMode $resizeMode): self
     {
         return new self(
             width: $this->width,
             height: $this->height,
-            crop: $crop,
+            crop: $resizeMode->value,
             canvasColor: $this->canvasColor,
             quality: $this->quality,
             missing: $this->missing,
@@ -131,11 +131,6 @@ final class ImageOptionsDTO
     public function getResizeMode(): ImageResizeMode
     {
         return ImageResizeMode::fromLegacyCrop($this->crop);
-    }
-
-    public function getCrop(): int
-    {
-        return $this->crop;
     }
 
     public function getCanvasColor(): string
