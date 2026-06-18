@@ -31,29 +31,15 @@ final class ImageCacheResponder
             ServerRequest::get('HTTP_IF_MODIFIED_SINCE'),
         );
 
-        if (
-            $clientTime < 1 ||
-            !$this->fileInspector->exists(
-                file: $file->getSourceFile(),
-            )
-        ) {
+        if ($clientTime < 1) {
             return false;
         }
 
-        $cacheFile = $this->resolveCacheFile(
+        $cacheFile = $this->resolveFreshCacheFile(
             file: $file,
         );
 
-        if (!$this->fileInspector->exists(
-            file: $cacheFile,
-        )) {
-            return false;
-        }
-
-        if (!$this->isCacheFresh(
-            sourceFile: $file->getSourceFile(),
-            cacheFile: $cacheFile,
-        )) {
+        if ($cacheFile === null) {
             return false;
         }
 
@@ -72,26 +58,11 @@ final class ImageCacheResponder
 
     public function sendCacheImageIfExists(ImageFileContext $file): bool
     {
-        if (!$this->fileInspector->exists(
-            file: $file->getSourceFile(),
-        )) {
-            return false;
-        }
-
-        $cacheFile = $this->resolveCacheFile(
+        $cacheFile = $this->resolveFreshCacheFile(
             file: $file,
         );
 
-        if (!$this->fileInspector->exists(
-            file: $cacheFile,
-        )) {
-            return false;
-        }
-
-        if (!$this->isCacheFresh(
-            sourceFile: $file->getSourceFile(),
-            cacheFile: $cacheFile,
-        )) {
+        if ($cacheFile === null) {
             return false;
         }
 
@@ -107,6 +78,34 @@ final class ImageCacheResponder
             file: $cacheFile,
             type: $type,
         );
+    }
+
+    private function resolveFreshCacheFile(ImageFileContext $file): ?string
+    {
+        if (!$this->fileInspector->exists(
+            file: $file->getSourceFile(),
+        )) {
+            return null;
+        }
+
+        $cacheFile = $this->resolveCacheFile(
+            file: $file,
+        );
+
+        if (!$this->fileInspector->exists(
+            file: $cacheFile,
+        )) {
+            return null;
+        }
+
+        if (!$this->isCacheFresh(
+            sourceFile: $file->getSourceFile(),
+            cacheFile: $cacheFile,
+        )) {
+            return null;
+        }
+
+        return $cacheFile;
     }
 
     private function resolveCacheFile(ImageFileContext $file): string
