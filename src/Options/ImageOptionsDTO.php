@@ -25,7 +25,7 @@ final class ImageOptionsDTO
 {
     private readonly ?int $width;
     private readonly ?int $height;
-    private readonly int $crop;
+    private readonly ImageResizeMode $resizeMode;
     private readonly string $canvasColor;
     private readonly int $quality;
     private readonly bool $missing;
@@ -33,14 +33,14 @@ final class ImageOptionsDTO
     public function __construct(
         ?int $width,
         ?int $height,
-        int $crop,
+        ImageResizeMode $resizeMode,
         string $canvasColor,
         int $quality,
         bool $missing,
     ) {
         $this->width = $width;
         $this->height = $height;
-        $this->crop = $crop;
+        $this->resizeMode = $resizeMode;
         $this->canvasColor = $canvasColor;
         $this->quality = $quality;
         $this->missing = $missing;
@@ -49,24 +49,24 @@ final class ImageOptionsDTO
     public function withWidth(?int $width): self
     {
         return new self(
-            $width,
-            $this->height,
-            $this->crop,
-            $this->canvasColor,
-            $this->quality,
-            $this->missing,
+            width: $width,
+            height: $this->height,
+            resizeMode: $this->resizeMode,
+            canvasColor: $this->canvasColor,
+            quality: $this->quality,
+            missing: $this->missing,
         );
     }
 
     public function withHeight(?int $height): self
     {
         return new self(
-            $this->width,
-            $height,
-            $this->crop,
-            $this->canvasColor,
-            $this->quality,
-            $this->missing,
+            width: $this->width,
+            height: $height,
+            resizeMode: $this->resizeMode,
+            canvasColor: $this->canvasColor,
+            quality: $this->quality,
+            missing: $this->missing,
         );
     }
 
@@ -75,7 +75,7 @@ final class ImageOptionsDTO
         return new self(
             width: $this->width,
             height: $this->height,
-            crop: $resizeMode->value,
+            resizeMode: $resizeMode,
             canvasColor: $this->canvasColor,
             quality: $this->quality,
             missing: $this->missing,
@@ -87,7 +87,7 @@ final class ImageOptionsDTO
         return new self(
             width: $this->width,
             height: $this->height,
-            crop: $this->crop,
+            resizeMode: $this->resizeMode,
             canvasColor: $color,
             quality: $this->quality,
             missing: $this->missing,
@@ -99,7 +99,7 @@ final class ImageOptionsDTO
         return new self(
             width: $this->width,
             height: $this->height,
-            crop: $this->crop,
+            resizeMode: $this->resizeMode,
             canvasColor: $this->canvasColor,
             quality: $quality,
             missing: $this->missing,
@@ -111,7 +111,7 @@ final class ImageOptionsDTO
         return new self(
             width: $this->width,
             height: $this->height,
-            crop: $this->crop,
+            resizeMode: $this->resizeMode,
             canvasColor: $this->canvasColor,
             quality: $this->quality,
             missing: $missing,
@@ -130,7 +130,7 @@ final class ImageOptionsDTO
 
     public function getResizeMode(): ImageResizeMode
     {
-        return ImageResizeMode::fromLegacyCrop($this->crop);
+        return $this->resizeMode;
     }
 
     public function getCanvasColor(): string
@@ -165,7 +165,7 @@ final class ImageOptionsDTO
             'h' => $this->height,
             'c' => $this->canvasColor,
             'e' => $this->missing,
-            'z' => $this->crop,
+            'z' => $this->resizeMode->value,
             'q' => $this->quality,
         ]);
 
@@ -184,8 +184,9 @@ final class ImageOptionsDTO
             $this->height === null ? 'null' : (string) $this->height,
             $this->canvasColor,
             $this->missing ? '1' : '0',
-            $this->crop,
+            $this->resizeMode->value,
             $this->quality,
         );
     }
+
 }

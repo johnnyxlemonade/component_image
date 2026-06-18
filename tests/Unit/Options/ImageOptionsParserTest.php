@@ -142,7 +142,7 @@ final class ImageOptionsParserTest extends TestCase
         $options = new ImageOptionsDTO(
             width: 320,
             height: 240,
-            crop: ImageResizeMode::Shrink->value,
+            resizeMode: ImageResizeMode::Shrink,
             canvasColor: 'ffffff',
             quality: 72,
             missing: true,

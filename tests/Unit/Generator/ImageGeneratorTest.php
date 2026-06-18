@@ -11,6 +11,7 @@ use Lemonade\Image\Generator\AppGenerator;
 use Lemonade\Image\Generator\ImageGenerator;
 use Lemonade\Image\ImageStorageConfig;
 use Lemonade\Image\Options\ImageOptionsDTO;
+use Lemonade\Image\Options\ImageResizeMode;
 use Lemonade\Image\Utils\FileSystem;
 use PHPUnit\Framework\TestCase;
 
@@ -55,7 +56,7 @@ final class ImageGeneratorTest extends TestCase
             file: $this->createFileContext(
                 width: 400,
                 height: 300,
-                crop: 3,
+                resizeMode: ImageResizeMode::Fit,
                 file: 'example.png',
             ),
         );
@@ -82,7 +83,7 @@ final class ImageGeneratorTest extends TestCase
             file: $this->createFileContext(
                 width: null,
                 height: null,
-                crop: -1,
+                resizeMode: ImageResizeMode::Original,
                 file: 'example.png',
             ),
         );
@@ -108,7 +109,7 @@ final class ImageGeneratorTest extends TestCase
             file: $this->createFileContext(
                 width: 300,
                 height: 300,
-                crop: 2,
+                resizeMode: ImageResizeMode::Exact,
                 file: 'example.png',
             ),
         );
@@ -133,7 +134,7 @@ final class ImageGeneratorTest extends TestCase
             file: $this->createFileContext(
                 width: 300,
                 height: 300,
-                crop: 1,
+                resizeMode: ImageResizeMode::FitWithCanvas,
                 file: 'example.png',
             ),
         );
@@ -160,7 +161,7 @@ final class ImageGeneratorTest extends TestCase
             file: $this->createFileContext(
                 width: 320,
                 height: 240,
-                crop: 0,
+                resizeMode: ImageResizeMode::Shrink,
                 file: 'missing.png',
             ),
         );
@@ -181,7 +182,7 @@ final class ImageGeneratorTest extends TestCase
             file: $this->createFileContext(
                 width: 200,
                 height: 100,
-                crop: 0,
+                resizeMode: ImageResizeMode::Shrink,
                 file: 'missing.png',
             ),
         );
@@ -201,7 +202,7 @@ final class ImageGeneratorTest extends TestCase
             file: $this->createFileContext(
                 width: null,
                 height: null,
-                crop: 0,
+                resizeMode: ImageResizeMode::Shrink,
                 file: 'missing.png',
             ),
         );
@@ -229,7 +230,7 @@ final class ImageGeneratorTest extends TestCase
     private function createFileContext(
         ?int $width,
         ?int $height,
-        int $crop,
+        ImageResizeMode $resizeMode,
         string $file,
     ): ImageFileContext {
         return new ImageFileContext(
@@ -250,7 +251,7 @@ final class ImageGeneratorTest extends TestCase
             options: new ImageOptionsDTO(
                 width: $width,
                 height: $height,
-                crop: $crop,
+                resizeMode: $resizeMode,
                 canvasColor: 'ffffff',
                 quality: 85,
                 missing: true,

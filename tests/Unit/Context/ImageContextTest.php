@@ -9,6 +9,7 @@ use Lemonade\Image\Context\ImageFileContext;
 use Lemonade\Image\Filesystem\ImageDirectoryResolver;
 use Lemonade\Image\ImageStorageConfig;
 use Lemonade\Image\Options\ImageOptionsDTO;
+use Lemonade\Image\Options\ImageResizeMode;
 use Lemonade\Image\Utils\FileSystem;
 use PHPUnit\Framework\TestCase;
 
@@ -87,7 +88,7 @@ final class ImageContextTest extends TestCase
             options: new ImageOptionsDTO(
                 width: $width,
                 height: $height,
-                crop: 1,
+                resizeMode: ImageResizeMode::FitWithCanvas,
                 canvasColor: 'ffffff',
                 quality: 85,
                 missing: true,

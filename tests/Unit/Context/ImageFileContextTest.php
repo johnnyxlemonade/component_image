@@ -8,6 +8,7 @@ use Lemonade\Image\Context\ImageFileContext;
 use Lemonade\Image\Filesystem\ImageDirectoryResolver;
 use Lemonade\Image\ImageStorageConfig;
 use Lemonade\Image\Options\ImageOptionsDTO;
+use Lemonade\Image\Options\ImageResizeMode;
 use Lemonade\Image\Utils\FileSystem;
 use PHPUnit\Framework\TestCase;
 
@@ -18,7 +19,7 @@ final class ImageFileContextTest extends TestCase
         $options = new ImageOptionsDTO(
             width: 320,
             height: 240,
-            crop: 1,
+            resizeMode: ImageResizeMode::FitWithCanvas,
             canvasColor: 'ffffff',
             quality: 85,
             missing: true,
@@ -62,7 +63,7 @@ final class ImageFileContextTest extends TestCase
         $options = new ImageOptionsDTO(
             width: 320,
             height: 240,
-            crop: 1,
+            resizeMode: ImageResizeMode::FitWithCanvas,
             canvasColor: 'ffffff',
             quality: 85,
             missing: true,
@@ -96,7 +97,7 @@ final class ImageFileContextTest extends TestCase
         $options = new ImageOptionsDTO(
             width: 320,
             height: 240,
-            crop: 1,
+            resizeMode: ImageResizeMode::FitWithCanvas,
             canvasColor: 'ffffff',
             quality: 85,
             missing: true,
@@ -120,7 +121,7 @@ final class ImageFileContextTest extends TestCase
         $options = new ImageOptionsDTO(
             width: null,
             height: null,
-            crop: 0,
+            resizeMode: ImageResizeMode::Shrink,
             canvasColor: 'ffffff',
             quality: 85,
             missing: true,
@@ -147,7 +148,7 @@ final class ImageFileContextTest extends TestCase
         $options = new ImageOptionsDTO(
             width: 320,
             height: 240,
-            crop: 0,
+            resizeMode: ImageResizeMode::Shrink,
             canvasColor: 'ffffff',
             quality: 85,
             missing: true,

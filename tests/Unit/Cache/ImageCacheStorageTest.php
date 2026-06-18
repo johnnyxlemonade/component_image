@@ -12,6 +12,7 @@ use Lemonade\Image\Generator\AppGenerator;
 use Lemonade\Image\ImageResult;
 use Lemonade\Image\ImageStorageConfig;
 use Lemonade\Image\Options\ImageOptionsDTO;
+use Lemonade\Image\Options\ImageResizeMode;
 use Lemonade\Image\Utils\FileSystem;
 use PHPUnit\Framework\TestCase;
 
@@ -130,7 +131,7 @@ final class ImageCacheStorageTest extends TestCase
                 options: new ImageOptionsDTO(
                     width: 320,
                     height: 240,
-                    crop: 1,
+                    resizeMode: ImageResizeMode::FitWithCanvas,
                     canvasColor: 'ffffff',
                     quality: 85,
                     missing: true,

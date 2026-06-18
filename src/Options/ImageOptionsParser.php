@@ -310,7 +310,7 @@ final class ImageOptionsParser
         return new ImageOptionsDTO(
             width: $this->width,
             height: $this->height,
-            crop: $this->crop,
+            resizeMode: ImageResizeMode::fromLegacyCrop($this->crop),
             canvasColor: $this->canvas,
             quality: $this->quality,
             missing: $this->missing,

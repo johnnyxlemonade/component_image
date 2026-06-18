@@ -28,7 +28,7 @@ final class ImageOptionsDTOTest extends TestCase
             (new ImageOptionsDTO(
                 width: null,
                 height: null,
-                crop: ImageResizeMode::Shrink->value,
+                resizeMode: ImageResizeMode::Shrink,
                 canvasColor: 'ffffff',
                 quality: 85,
                 missing: true,
@@ -39,7 +39,7 @@ final class ImageOptionsDTOTest extends TestCase
             (new ImageOptionsDTO(
                 width: 320,
                 height: null,
-                crop: ImageResizeMode::Shrink->value,
+                resizeMode: ImageResizeMode::Shrink,
                 canvasColor: 'ffffff',
                 quality: 85,
                 missing: true,
@@ -50,7 +50,7 @@ final class ImageOptionsDTOTest extends TestCase
             (new ImageOptionsDTO(
                 width: null,
                 height: 240,
-                crop: ImageResizeMode::Shrink->value,
+                resizeMode: ImageResizeMode::Shrink,
                 canvasColor: 'ffffff',
                 quality: 85,
                 missing: true,
@@ -156,7 +156,7 @@ final class ImageOptionsDTOTest extends TestCase
         return new ImageOptionsDTO(
             width: 320,
             height: 240,
-            crop: ImageResizeMode::FitWithCanvas->value,
+            resizeMode: ImageResizeMode::FitWithCanvas,
             canvasColor: 'ffffff',
             quality: 85,
             missing: true,
