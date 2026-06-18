@@ -39,7 +39,7 @@ final class ImageApplication
         private readonly ImageFileInspector $fileInspector,
     ) {}
 
-    public function run(): void
+    public function run(): never
     {
         $file = $this->context->getFile();
 
@@ -71,8 +71,6 @@ final class ImageApplication
             );
 
             $this->createAndSendFallback();
-
-            return;
         }
 
         try {
@@ -81,8 +79,6 @@ final class ImageApplication
             );
         } catch (Throwable) {
             $this->createAndSendFallback();
-
-            return;
         }
 
         $this->cacheStorage->saveVariant(
@@ -97,7 +93,7 @@ final class ImageApplication
         );
     }
 
-    private function createAndSendFallback(): void
+    private function createAndSendFallback(): never
     {
         $file = $this->context->getFile();
 
